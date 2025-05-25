@@ -21,4 +21,4 @@ COPY --from=builder /app/build ./build
 ENV NODE_ENV=production
 RUN npm ci --omit=dev --ignore-scripts
 
-ENTRYPOINT ["node", "build/index.js"]
+ENTRYPOINT ["node", "build/index.js", "--http"]
