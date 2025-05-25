@@ -1,5 +1,11 @@
 # @baruchiro/actual-mcp
 
+## 0.0.3
+
+### Patch Changes
+
+- 29dfb57: Add EXPOSE directive for port 3000 in Dockerfile
+
 ## 0.0.2
 
 ### Patch Changes
