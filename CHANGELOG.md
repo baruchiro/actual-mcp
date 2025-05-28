@@ -1,5 +1,11 @@
 # @baruchiro/actual-mcp
 
+## 0.0.6
+
+### Patch Changes
+
+- c4af1e9: fix compiled libraries
+
 ## 0.0.5
 
 ### Patch Changes
