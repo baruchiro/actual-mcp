@@ -19,7 +19,7 @@ COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/build ./build
 
 ENV NODE_ENV=production
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --omit=dev
 
 EXPOSE 3000
 ENTRYPOINT ["node", "build/index.js", "--sse"]
