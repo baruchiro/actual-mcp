@@ -1,5 +1,11 @@
 # @baruchiro/actual-mcp
 
+## 0.0.4
+
+### Patch Changes
+
+- c9b8fce: print error when server failed to start
+
 ## 0.0.3
 
 ### Patch Changes
