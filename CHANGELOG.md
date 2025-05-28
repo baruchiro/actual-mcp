@@ -1,5 +1,11 @@
 # @baruchiro/actual-mcp
 
+## 0.0.5
+
+### Patch Changes
+
+- ecfd5f7: Update Dockerfile ENTRYPOINT to use SSE
+
 ## 0.0.4
 
 ### Patch Changes
