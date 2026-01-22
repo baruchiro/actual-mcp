@@ -10,7 +10,7 @@ export interface Account {
 }
 
 export interface Transaction {
-  id?: string;
+  id: string;
   account: string;
   date: string;
   amount: number;
@@ -19,6 +19,8 @@ export interface Transaction {
   category?: string;
   category_name?: string;
   notes?: string;
+  transfer_id?: string;
+  cleared?: boolean;
 }
 
 export interface Category {
@@ -32,6 +34,7 @@ export interface CategoryGroup {
   id: string;
   name: string;
   is_income?: boolean;
+  categories?: Category[];
 }
 
 export interface CategoryGroupInfo {
@@ -54,4 +57,10 @@ export interface GroupSpending {
   name: string;
   total: number;
   categories: CategorySpending[];
+}
+
+export interface Payee {
+  id: string;
+  name: string;
+  transfer_acct?: string;
 }

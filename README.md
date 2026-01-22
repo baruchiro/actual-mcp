@@ -16,69 +16,47 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 
 ### Tools
 
+#### Transaction & Account Management
+
 - **`get-transactions`** - Retrieve and filter transactions by account, date, amount, category, or payee
+- **`create-transaction`** - Create a new transaction in an account with optional category, payee, and notes
+- **`update-transaction`** - Update an existing transaction with new category, payee, notes, or amount
+- **`get-accounts`** - Retrieve a list of all accounts with their current balance and ID
+- **`balance-history`** - View account balance changes over time
+
+#### Reporting & Analytics
+
 - **`spending-by-category`** - Generate spending breakdowns categorized by type
 - **`monthly-summary`** - Get monthly income, expenses, and savings metrics
-- **`balance-history`** - View account balance changes over time
+
+#### Categories
+
+- **`get-grouped-categories`** - Retrieve a list of all category groups with their categories
+- **`create-category`** - Create a new category within a category group
+- **`update-category`** - Update an existing category's name or group
+- **`delete-category`** - Delete a category
+- **`create-category-group`** - Create a new category group
+- **`update-category-group`** - Update a category group's name
+- **`delete-category-group`** - Delete a category group
+
+#### Payees
+
+- **`get-payees`** - Retrieve a list of all payees with their details
+- **`create-payee`** - Create a new payee
+- **`update-payee`** - Update an existing payee's details
+- **`delete-payee`** - Delete a payee
+
+#### Rules
+
+- **`get-rules`** - Retrieve a list of all transaction rules
+- **`create-rule`** - Create a new transaction rule with conditions and actions
+- **`update-rule`** - Update an existing transaction rule
+- **`delete-rule`** - Delete a transaction rule
 
 ### Prompts
 
 - **`financial-insights`** - Generate insights and recommendations based on your financial data
 - **`budget-review`** - Analyze your budget compliance and suggest adjustments
-
-## Usage with Claude Desktop
-
-To use this server with Claude Desktop, add it to your Claude configuration:
-
-On MacOS:
-
-```bash
-code ~/Library/Application\ Support/Claude/claude_desktop_config.json
-```
-
-On Windows:
-
-```bash
-code %APPDATA%\Claude\claude_desktop_config.json
-```
-
-Add the following to your configuration:
-
-```json
-{
-  "mcpServers": {
-    "actualBudget": {
-      "command": "npx",
-      "args": ["-y", "actual-mcp"],
-      "env": {
-        "ACTUAL_DATA_DIR": "/path/to/your/actual/data",
-        "ACTUAL_PASSWORD": "your-password",
-        "ACTUAL_SERVER_URL": "https://your-actual-server.com",
-        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id"
-      }
-    }
-  }
-}
-```
-
-```json
-{
-  "mcpServers": {
-    "actualBudget": {
-      "command": "docker",
-      "args": ["run", "-it", "--rm", "-p", "3000:3000", "sstefanov/actual-mcp:latest"],
-      "env": {
-        "ACTUAL_DATA_DIR": "/path/to/your/actual/data",
-        "ACTUAL_PASSWORD": "your-password",
-        "ACTUAL_SERVER_URL": "https://your-actual-server.com",
-        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id"
-      }
-    }
-  }
-}
-```
-
-After saving the configuration, restart Claude Desktop.
 
 ## Installation
 
@@ -87,8 +65,17 @@ After saving the configuration, restart Claude Desktop.
 - [Node.js](https://nodejs.org/) (v16 or higher)
 - [Actual Budget](https://actualbudget.com/) installed and configured
 - [Claude Desktop](https://claude.ai/download) or another MCP-compatible client
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (optional)
 
-### Setup
+### Remote access
+
+Pull the latest docker image:
+
+```
+docker pull sstefanov/actual-mcp:latest
+```
+
+### Local setup
 
 1. Clone the repository:
 
@@ -109,7 +96,13 @@ npm install
 npm run build
 ```
 
-4. Configure environment variables (optional):
+4. Build the local docker image (optional):
+
+```bash
+docker build -t <local-image-name> .
+```
+
+5. Configure environment variables (optional):
 
 ```bash
 # Path to your Actual Budget data directory (default: ~/.actual)
@@ -123,6 +116,122 @@ export ACTUAL_PASSWORD="your-password"
 export ACTUAL_BUDGET_SYNC_ID="your-budget-id"
 ```
 
+Optional: separate encryption budget password
+
+If your Actual setup requires a different password to unlock the local/encrypted budget data than the server authentication password, you can set `ACTUAL_BUDGET_ENCRYPTION_PASSWORD` in addition to `ACTUAL_PASSWORD`.
+
+```bash
+# If server auth and encryption/unlock use different passwords
+export ACTUAL_BUDGET_ENCRYPTION_PASSWORD="your-encryption-password"
+```
+
+## Usage with Claude Desktop
+
+To use this server with Claude Desktop, add it to your Claude configuration:
+
+On MacOS:
+
+```bash
+code ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
+
+On Windows:
+
+```bash
+code %APPDATA%\Claude\claude_desktop_config.json
+```
+
+Add the following to your configuration...
+
+### a. Using Node.js (npx version):
+
+```json
+{
+  "mcpServers": {
+    "actualBudget": {
+      "command": "npx",
+      "args": ["-y", "actual-mcp", "--enable-write"],
+      "env": {
+        "ACTUAL_DATA_DIR": "path/to/your/data",
+        "ACTUAL_PASSWORD": "your-password",
+        "ACTUAL_SERVER_URL": "http://your-actual-server.com",
+        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id"
+      }
+    }
+  }
+}
+
+### a. Using Node.js (local only):
+
+```json
+{
+  "mcpServers": {
+    "actualBudget": {
+      "command": "node",
+      "args": ["/path/to/your/clone/build/index.js", "--enable-write"],
+      "env": {
+        "ACTUAL_DATA_DIR": "path/to/your/data",
+        "ACTUAL_PASSWORD": "your-password",
+        "ACTUAL_SERVER_URL": "http://your-actual-server.com",
+        "ACTUAL_BUDGET_SYNC_ID": "your-budget-id"
+      }
+    }
+  }
+}
+```
+
+### b. Using Docker (local or remote images):
+
+```json
+{
+  "mcpServers": {
+    "actualBudget": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/path/to/your/data:/data",
+        "-e",
+        "ACTUAL_PASSWORD=your-password",
+        "-e",
+        "ACTUAL_SERVER_URL=https://your-actual-server.com",
+        "-e",
+        "ACTUAL_BUDGET_SYNC_ID=your-budget-id",
+        "sstefanov/actual-mcp:latest",
+        "--enable-write"
+      ]
+    }
+  }
+}
+```
+
+After saving the configuration, restart Claude Desktop.
+
+> 💡 `ACTUAL_DATA_DIR` is optional if you're using `ACTUAL_SERVER_URL`.
+
+> 💡 Use `--enable-write` to enable write-access tools.
+
+## Running an SSE Server
+
+To expose the server over a port using Docker:
+
+```bash
+docker run -i --rm \
+  -p 3000:3000 \
+  -v "/path/to/your/data:/data" \
+  -e ACTUAL_PASSWORD="your-password" \
+  -e ACTUAL_SERVER_URL="http://your-actual-server.com" \
+  -e ACTUAL_BUDGET_SYNC_ID="your-budget-id" \
+  -e BEARER_TOKEN="your-bearer-token" \
+  sstefanov/actual-mcp:latest \
+  --sse --enable-write --enable-bearer
+```
+
+> ⚠️ Important: When using --enable-bearer, the BEARER_TOKEN environment variable must be set.  
+> 🔒 This is highly recommended if you're exposing your server via a public URL.
+
 ## Example Queries
 
 Once connected, you can ask Claude questions like:
@@ -132,6 +241,18 @@ Once connected, you can ask Claude questions like:
 - "How much did I spend on groceries in January?"
 - "What's my savings rate over the past 3 months?"
 - "Analyze my budget and suggest areas to improve"
+
+## Usage with Codex CLI
+
+Example Codex configuration:
+
+In `~/.codex/config.toml`:
+```toml
+[mcp_servers.actual-budget]
+url = "http://localhost:3000"
+```
+
+Point Codex at the same port you pass to `npm start -- --sse --port <PORT>`.
 
 ## Development
 

@@ -4,19 +4,22 @@ import type { Transaction } from '../../types.js';
 
 export class GetTransactionsMapper {
   map(transactions: Transaction[]): Array<{
+    id: string;
     date: string;
     payee: string;
     category: string;
     amount: string;
     notes: string;
+    cleared: boolean;
   }> {
-    // TODO: Payee and category are not visible in the transaction object
     return transactions.map((t) => ({
+      id: t.id,
       date: formatDate(t.date),
-      payee: t.payee_name || '(No payee)',
-      category: t.category_name || '(Uncategorized)',
+      payee: t.payee_name || t.payee || '(No payee)',
+      category: t.category_name || t.category || '(Uncategorized)',
       amount: formatAmount(t.amount),
       notes: t.notes || '',
+      cleared: t.cleared ?? false,
     }));
   }
 }
