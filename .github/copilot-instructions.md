@@ -66,7 +66,7 @@ npm ci               # Clean install (ALWAYS run first)
 npm run build        # tsc → build/ + chmod 755 index.js
 npm run test         # Vitest run
 npm run test:coverage # With coverage reports
-npm run type-check   # tsc --noEmit
+npm run type-check   # npx tsc --noEmit
 npm run lint         # ESLint check
 npm run lint:fix     # ESLint auto-fix
 npm run format       # Prettier write
@@ -95,7 +95,7 @@ npm start            # tsx src/index.ts (dev mode)
 - Actual: @actual-app/api 25.11.0
 - Validation: zod + zod-to-json-schema
 - Test: vitest 3.2.4
-- Node: v16+ (CI uses 20-22)
+- Node: v16+ supported (CI uses Node 22 for PR validation, Node 20 for releases)
 
 ## Environment Variables
 Required in `.env` (see `.env.example`):
