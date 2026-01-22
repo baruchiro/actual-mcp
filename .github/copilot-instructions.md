@@ -95,7 +95,7 @@ npm start            # tsx src/index.ts (dev mode)
 - Actual: @actual-app/api 25.11.0
 - Validation: zod + zod-to-json-schema
 - Test: vitest 3.2.4
-- Node: v16+ supported (CI uses Node 22 for PR validation, Node 20 for releases)
+- Node: CI uses Node 22 for PR validation, Node 20 for releases (README suggests v16+ minimum)
 
 ## Environment Variables
 Required in `.env` (see `.env.example`):
