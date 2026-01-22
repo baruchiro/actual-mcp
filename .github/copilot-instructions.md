@@ -24,7 +24,7 @@ npm run quality  # lint + format:check + type-check (~15s)
 
 ## CI Must Pass (Replicate with: `npm ci && npm run build && npm run test:coverage && npm run quality`)
 - **build-and-test**: npm ci → build → test:coverage (Node 22, 10min timeout)
-- **type-check**: npm ci → tsc --noEmit (Node 22, 5min timeout)  
+- **type-check**: npm ci → npx tsc --noEmit (Node 22, 5min timeout)  
 - **lint**: npm ci → npm run quality (Node 22, 5min timeout)
 - **coverage-report**: Downloads artifacts, runs vitest-coverage-report
 
