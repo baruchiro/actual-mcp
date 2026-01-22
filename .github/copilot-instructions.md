@@ -40,7 +40,7 @@ src/
 │   ├── mapping/          # category-mapper, transaction-mapper
 │   ├── input/            # validators
 │   └── types/            # domain.ts
-└── tools/                # MCP tool implementations (14 tools)
+└── tools/                # MCP tool implementations (24 tools: 8 read + 16 write)
     ├── index.ts          # Tool registration
     └── [tool-name]/      # Each tool has index.ts + optional: input-parser, data-fetcher, report-generator, types
 ```
