@@ -1,6 +1,6 @@
 {
-  "name": "actual-mcp",
-  "version": "1.7.0",
+  "name": "@baruchiro/actual-mcp",
+  "version": "1.8.0",
   "description": "Actual Budget MCP server exposing API functionality",
   "private": false,
   "main": "build/index.js",
@@ -41,7 +41,6 @@
     "dotenv": "17.2.3"
   },
   "devDependencies": {
-    "@changesets/cli": "2.29.8",
     "@types/express": "5.0.6",
     "@types/node": "22.19.3",
     "@vitest/coverage-v8": "3.2.4",
@@ -61,13 +60,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/s-stefanov/actual-mcp",
+  "homepage": "https://github.com/baruchiro/actual-mcp",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/s-stefanov/actual-mcp.git"
+    "url": "git+https://github.com/baruchiro/actual-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/s-stefanov/actual-mcp/issues"
+    "url": "https://github.com/baruchiro/actual-mcp/issues"
   },
   "keywords": [
     "mcp",
@@ -77,6 +76,6 @@
     "model-context-protocol",
     "actual"
   ],
-  "author": "Stefan Stefanov",
+  "author": "Baruch Odem (Rothkoff)",
   "license": "MIT"
 }
