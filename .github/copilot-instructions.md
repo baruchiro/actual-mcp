@@ -117,8 +117,8 @@ ACTUAL_BUDGET_ENCRYPTION_PASSWORD=  # Optional
 ## Fork & Upstream Workflow
 This is a fork of s-stefanov/actual-mcp. To stay updated with upstream:
 - Add upstream remote: `git remote add upstream https://github.com/s-stefanov/actual-mcp.git`
-- Fetch upstream: `git fetch upstream main`
-- Start feature branches from upstream main when contributing to both repos
+- Fetch upstream changes: `git fetch upstream`
+- Start feature branches from upstream/main when contributing to both repos
 - PR validation workflow same for both fork and upstream
 
 **Trust these instructions first.** Only search if info is incomplete/wrong.
