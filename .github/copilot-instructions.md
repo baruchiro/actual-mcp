@@ -27,6 +27,7 @@ npm run quality  # lint + format:check + type-check (~15s)
 - **type-check**: npm ci → npx tsc --noEmit (Node 22, 5min timeout)  
 - **lint**: npm ci → npm run quality (Node 22, 5min timeout)
 - **coverage-report**: Downloads artifacts, runs vitest-coverage-report
+- **release-please**: Uses release-please-action for automated releases (on main branch push)
 
 ## Project Structure
 ```
@@ -112,5 +113,11 @@ ACTUAL_BUDGET_ENCRYPTION_PASSWORD=  # Optional
 - Types: `src/types.ts`, `src/core/types/domain.ts`
 - Tests: `*.test.ts` co-located
 - Utils: `src/utils.ts`, `src/core/`
+
+## Fork & Upstream Workflow
+This is a fork of s-stefanov/actual-mcp. To stay updated with upstream:
+- Fetch upstream: `git fetch https://github.com/s-stefanov/actual-mcp main`
+- Start feature branches from upstream main when contributing to both repos
+- PR validation workflow same for both fork and upstream
 
 **Trust these instructions first.** Only search if info is incomplete/wrong.
