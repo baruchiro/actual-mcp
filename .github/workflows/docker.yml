@@ -5,8 +5,12 @@ on:
     branches: [main]
   push:
     branches: [main]
-    tags:
-      - 'v*'
+  workflow_call:
+    inputs:
+      release_tag:
+        description: 'Release tag for semantic versioning (e.g., v1.2.3)'
+        required: false
+        type: string
   workflow_dispatch:
 
 permissions:
@@ -43,6 +47,11 @@ jobs:
             type=ref,event=branch
             # Tag latest for main branch
             type=raw,value=latest,enable={{is_default_branch}}
+            # Semantic versioning for releases (only when release_tag is provided)
+            type=semver,pattern={{version}},value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
+            type=semver,pattern={{major}},value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
+            type=raw,value=latest,enable=${{ inputs.release_tag != '' }}
           labels: |
             org.opencontainers.image.title=Actual Budget MCP Server
             org.opencontainers.image.description=MCP server for integrating Actual Budget with Claude and other LLM assistants
