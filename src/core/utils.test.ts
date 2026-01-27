@@ -62,7 +62,7 @@ describe('formatAmount', () => {
     });
 
     it('formats negative amounts with currency symbol', () => {
-      expect(formatAmount(-12345)).toBe('$-123.45');
+      expect(formatAmount(-12345)).toBe('-$123.45');
     });
 
     it('formats zero with currency symbol', () => {
@@ -84,7 +84,7 @@ describe('formatAmount', () => {
     });
 
     it('formats negative amounts with Euro symbol', () => {
-      expect(formatAmount(-12345)).toBe('€-123.45');
+      expect(formatAmount(-12345)).toBe('-€123.45');
     });
   });
 

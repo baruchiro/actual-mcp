@@ -37,10 +37,16 @@ export function formatAmount(amount: number | undefined | null): string {
 
   if (currencySymbol) {
     // Format with custom currency symbol
+    const absValue = Math.abs(dollars);
     const formatted = new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(dollars);
+    }).format(absValue);
+
+    // Handle negative values with currency symbol before the minus sign
+    if (dollars < 0) {
+      return `-${currencySymbol}${formatted}`;
+    }
     return `${currencySymbol}${formatted}`;
   }
 
