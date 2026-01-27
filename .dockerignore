@@ -6,9 +6,6 @@ build/
 dist/
 coverage/
 
-# Git
-.git/
-
 # Environment files
 .env
 .env.*
