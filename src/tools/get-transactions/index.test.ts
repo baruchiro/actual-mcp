@@ -3,7 +3,7 @@
 // ----------------------------
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handler, schema } from './index.js';
+import { handler } from './index.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsArgs } from '../../types.js';
 import { Transaction } from '../../core/types/domain.js';
@@ -28,31 +28,6 @@ describe('get-transactions tool', () => {
           fetch: mockFetch,
         }) as unknown as GetTransactionsDataFetcher
     );
-  });
-
-  describe('schema', () => {
-    it('should have correct tool name and description', () => {
-      expect(schema.name).toBe('get-transactions');
-      expect(schema.description).toContain('Get transactions for an account');
-      expect(schema.description).toContain('uncategorized');
-    });
-
-    it('should require accountId field', () => {
-      expect(schema.inputSchema.required).toContain('accountId');
-    });
-
-    it('should have all expected properties in schema', () => {
-      const properties = schema.inputSchema.properties;
-      expect(properties).toHaveProperty('accountId');
-      expect(properties).toHaveProperty('startDate');
-      expect(properties).toHaveProperty('endDate');
-      expect(properties).toHaveProperty('minAmount');
-      expect(properties).toHaveProperty('maxAmount');
-      expect(properties).toHaveProperty('categoryName');
-      expect(properties).toHaveProperty('payeeName');
-      expect(properties).toHaveProperty('uncategorizedOnly');
-      expect(properties).toHaveProperty('limit');
-    });
   });
 
   describe('handler - uncategorized filtering', () => {

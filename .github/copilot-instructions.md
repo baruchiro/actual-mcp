@@ -90,6 +90,13 @@ npm start            # tsx src/index.ts (dev mode)
 - Mock with `vi.mock()`
 - Coverage: happy path + edge case + error case
 - Only `src/core/` and `src/tools/` measured
+- Test logic, not declarative schemas
+
+## Tool Features
+### get-transactions
+- Filters: date range, amount, category, payee, uncategorizedOnly, limit
+- `uncategorizedOnly: true` - Returns only transactions without category assignment (both `category` and `category_name` are null/undefined)
+- Filters are composable - can combine uncategorizedOnly with other filters
 
 ## Dependencies
 - MCP: @modelcontextprotocol/sdk 1.17.4
