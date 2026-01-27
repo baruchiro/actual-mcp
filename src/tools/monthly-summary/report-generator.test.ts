@@ -31,9 +31,9 @@ describe('MonthlySummaryReportGenerator', () => {
 
     const markdown = generator.generate(data);
 
-    expect(markdown).toContain('| January 2024 | $4,000.00 | $2,000.00 | $500.00 | $1,500.00 | $2,000.00 | 50.0% |');
-    expect(markdown).toContain('Average Monthly Traditional Savings: $1,500.00');
-    expect(markdown).toContain('Average Monthly Total Savings: $2,000.00');
+    expect(markdown).toContain('| January 2024 | 4,000.00 | 2,000.00 | 500.00 | 1,500.00 | 2,000.00 | 50.0% |');
+    expect(markdown).toContain('Average Monthly Traditional Savings: 1,500.00');
+    expect(markdown).toContain('Average Monthly Total Savings: 2,000.00');
     expect(markdown).toContain('Average Traditional Savings Rate: 37.5%');
     expect(markdown).toContain('**Traditional Savings**: Income minus regular expenses and investments');
   });
@@ -64,7 +64,7 @@ describe('MonthlySummaryReportGenerator', () => {
 
     const markdown = generator.generate(data);
 
-    expect(markdown).toContain('| February 2024 | $0.00 | $100.00 | $0.00 | -$100.00 | -$100.00 | N/A |');
+    expect(markdown).toContain('| February 2024 | 0.00 | 100.00 | 0.00 | -100.00 | -100.00 | N/A |');
     expect(markdown).toContain('Accounts: All on-budget accounts');
   });
 });

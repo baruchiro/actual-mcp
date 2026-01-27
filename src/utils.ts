@@ -31,9 +31,23 @@ export function formatAmount(amount: number | undefined | null): string {
 
   // Convert from cents to dollars
   const dollars = amount / 100;
+
+  // Use optional currency symbol from environment variable
+  const currencySymbol = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
+
+  if (currencySymbol) {
+    // Format with custom currency symbol
+    const formatted = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(dollars);
+    return `${currencySymbol}${formatted}`;
+  }
+
+  // Default: no currency symbol, just the number
   return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(dollars);
 }
 
