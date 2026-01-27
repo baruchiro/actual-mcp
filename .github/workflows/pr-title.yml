@@ -8,15 +8,23 @@ jobs:
   validate:
     name: Validate Conventional Commit Title
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
       - name: Install commitlint
-        run: npm install -g @commitlint/cli @commitlint/config-conventional
+        run: npm install --save-dev @commitlint/cli @commitlint/config-conventional
 
       - name: Configure commitlint
         run: |
           echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
 
       - name: Validate PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          echo "${{ github.event.pull_request.title }}" | commitlint
+          echo "$PR_TITLE" | npx commitlint
