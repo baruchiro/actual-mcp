@@ -36,11 +36,11 @@ export function formatAmount(amount: number | undefined | null): string {
   const currencyCode = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
 
   try {
-    if (currencyCode) {
+    if (currencyCode && currencyCode.trim() !== '') {
       // Format with currency using the provided currency code
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: currencyCode,
+        currency: currencyCode.trim(),
       }).format(dollars);
     } else {
       // Format without currency
