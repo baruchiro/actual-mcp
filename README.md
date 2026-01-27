@@ -69,10 +69,16 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 
 ### Remote access
 
-Pull the latest docker image:
+Pull the latest docker image from GitHub Container Registry:
 
+```bash
+docker pull ghcr.io/baruchiro/actual-mcp:latest
 ```
-docker pull sstefanov/actual-mcp:latest
+
+For PR preview images (replace `123` with PR number):
+
+```bash
+docker pull ghcr.io/baruchiro/actual-mcp:pr-123
 ```
 
 ### Local setup
@@ -199,7 +205,7 @@ Add the following to your configuration...
         "ACTUAL_SERVER_URL=https://your-actual-server.com",
         "-e",
         "ACTUAL_BUDGET_SYNC_ID=your-budget-id",
-        "sstefanov/actual-mcp:latest",
+        "ghcr.io/baruchiro/actual-mcp:latest",
         "--enable-write"
       ]
     }
@@ -225,12 +231,43 @@ docker run -i --rm \
   -e ACTUAL_SERVER_URL="http://your-actual-server.com" \
   -e ACTUAL_BUDGET_SYNC_ID="your-budget-id" \
   -e BEARER_TOKEN="your-bearer-token" \
-  sstefanov/actual-mcp:latest \
+  ghcr.io/baruchiro/actual-mcp:latest \
   --sse --enable-write --enable-bearer
 ```
 
 > ⚠️ Important: When using --enable-bearer, the BEARER_TOKEN environment variable must be set.  
 > 🔒 This is highly recommended if you're exposing your server via a public URL.
+
+## Docker Images
+
+### Available Images
+
+Docker images are published to GitHub Container Registry (ghcr.io) with the following tags:
+
+- `latest` - Latest release from the main branch
+- `v1.2.3` - Specific version tags (e.g., v1.8.0)
+- `1.2.3`, `1.2`, `1` - Semantic version aliases
+- `pr-123` - Preview images for pull requests (e.g., pr-42 for PR #42)
+
+### Using PR Preview Images
+
+To test a pull request before it's merged, you can use the PR-specific Docker image:
+
+```bash
+# Replace 123 with the actual PR number
+docker pull ghcr.io/baruchiro/actual-mcp:pr-123
+
+# Run the PR preview
+docker run -i --rm \
+  -v "/path/to/your/data:/data" \
+  -e ACTUAL_PASSWORD="your-password" \
+  -e ACTUAL_SERVER_URL="http://your-actual-server.com" \
+  -e ACTUAL_BUDGET_SYNC_ID="your-budget-id" \
+  ghcr.io/baruchiro/actual-mcp:pr-123 \
+  --enable-write
+```
+
+This allows you to test new features or bug fixes before they are officially released.
 
 ## Example Queries
 

@@ -5,7 +5,8 @@ on:
       - main
 permissions:
   id-token: write
-  contents: read
+  contents: write
+  packages: write
 
 jobs:
   release-please:
@@ -27,15 +28,28 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
       - run: npm publish
         if: ${{ steps.release.outputs.release_created }}
-      - name: Log in to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         if: ${{ steps.release.outputs.release_created }}
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.release.outputs.tag_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.release.outputs.tag_name }}
+            type=semver,pattern={{major}},value=${{ steps.release.outputs.tag_name }}
+            type=raw,value=latest
       - name: Build and push
         uses: docker/build-push-action@v6
         if: ${{ steps.release.outputs.release_created }}
         with:
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/actual-mcp:${{ steps.release.outputs.tag_name }},${{ secrets.DOCKER_USERNAME }}/actual-mcp:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
