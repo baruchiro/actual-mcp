@@ -45,12 +45,13 @@ jobs:
             type=ref,event=pr,prefix=pr-
             # Tag branches with branch name
             type=ref,event=branch
-            # Tag latest for main branch
-            type=raw,value=latest,enable={{is_default_branch}}
+            # Tag latest for main branch (only when not a release)
+            type=raw,value=latest,enable=${{ is_default_branch && inputs.release_tag == '' }}
             # Semantic versioning for releases (only when release_tag is provided)
             type=semver,pattern={{version}},value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
             type=semver,pattern={{major}}.{{minor}},value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
             type=semver,pattern={{major}},value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
+            # Latest tag for releases
             type=raw,value=latest,enable=${{ inputs.release_tag != '' }}
           labels: |
             org.opencontainers.image.title=Actual Budget MCP Server

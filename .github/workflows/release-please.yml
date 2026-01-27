@@ -35,10 +35,10 @@ jobs:
   docker-release:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
-    uses: ./.github/workflows/docker.yml
-    with:
-      release_tag: ${{ needs.release-please.outputs.tag_name }}
     permissions:
       contents: read
       packages: write
+    uses: ./.github/workflows/docker.yml
+    with:
+      release_tag: ${{ needs.release-please.outputs.tag_name }}
 
