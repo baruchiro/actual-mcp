@@ -32,16 +32,21 @@ export function formatAmount(amount: number | undefined | null): string {
   // Convert from cents to dollars
   const dollars = amount / 100;
 
-  // Use optional currency symbol from environment variable
-  const currencySymbol = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
+  // Shared number formatting configuration
+  const numberFormatConfig: Intl.NumberFormatOptions = {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  };
 
-  if (currencySymbol) {
+  // Use optional currency symbol from environment variable
+  // Only use it if it's a non-empty string after trimming
+  const currencySymbol = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
+  const hasValidCurrencySymbol = currencySymbol !== undefined && currencySymbol.trim() !== '';
+
+  if (hasValidCurrencySymbol) {
     // Format with custom currency symbol
     const absValue = Math.abs(dollars);
-    const formatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(absValue);
+    const formatted = new Intl.NumberFormat('en-US', numberFormatConfig).format(absValue);
 
     // Handle negative values with currency symbol before the minus sign
     if (dollars < 0) {
@@ -51,10 +56,7 @@ export function formatAmount(amount: number | undefined | null): string {
   }
 
   // Default: no currency symbol, just the number
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(dollars);
+  return new Intl.NumberFormat('en-US', numberFormatConfig).format(dollars);
 }
 
 // Helper to calculate start/end date strings for the N most recent months

@@ -103,8 +103,20 @@ describe('formatAmount', () => {
       process.env.ACTUAL_MCP_CURRENCY_SYMBOL = 'USD ';
     });
 
-    it('formats amounts with multi-character currency symbol', () => {
+    it('formats amounts with multi-character currency symbol (space preserved)', () => {
       expect(formatAmount(12345)).toBe('USD 123.45');
+    });
+  });
+
+  describe('with empty or whitespace-only currency symbol', () => {
+    it('treats empty string as no currency symbol', () => {
+      process.env.ACTUAL_MCP_CURRENCY_SYMBOL = '';
+      expect(formatAmount(12345)).toBe('123.45');
+    });
+
+    it('treats whitespace-only string as no currency symbol', () => {
+      process.env.ACTUAL_MCP_CURRENCY_SYMBOL = '   ';
+      expect(formatAmount(12345)).toBe('123.45');
     });
   });
 });
