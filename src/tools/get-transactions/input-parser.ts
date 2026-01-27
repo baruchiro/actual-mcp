@@ -10,11 +10,9 @@ export class GetTransactionsInputParser {
     const argsObj = args as Record<string, unknown>;
     const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, uncategorizedOnly, limit } =
       argsObj;
-    if (!accountId || typeof accountId !== 'string') {
-      throw new Error('accountId is required and must be a string');
-    }
+
     return {
-      accountId,
+      accountId: typeof accountId === 'string' && accountId.length > 0 ? accountId : undefined,
       startDate: typeof startDate === 'string' ? startDate : undefined,
       endDate: typeof endDate === 'string' ? endDate : undefined,
       minAmount: typeof minAmount === 'number' ? minAmount : undefined,

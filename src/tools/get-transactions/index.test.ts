@@ -152,28 +152,6 @@ describe('get-transactions tool', () => {
     });
   });
 
-  describe('handler - validation errors', () => {
-    it('should return error when accountId is missing', async () => {
-      const args = {} as unknown as GetTransactionsArgs;
-
-      const result = await handler(args);
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('accountId');
-    });
-
-    it('should return error when accountId is not a string', async () => {
-      const args = {
-        accountId: 123,
-      } as unknown as GetTransactionsArgs;
-
-      const result = await handler(args);
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('string');
-    });
-  });
-
   describe('handler - edge cases', () => {
     it('should handle empty transaction list', async () => {
       mockFetch.mockResolvedValue([]);

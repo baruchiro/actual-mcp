@@ -3,7 +3,7 @@
 import { BalanceHistoryArgs } from '../../types.js';
 
 export interface BalanceHistoryInput {
-  accountId: string;
+  accountId: string | undefined;
   includeOffBudget: boolean;
   months: number;
 }
@@ -12,7 +12,7 @@ export class BalanceHistoryInputParser {
   parse(args: BalanceHistoryArgs): BalanceHistoryInput {
     const { accountId, includeOffBudget, months } = args;
     return {
-      accountId,
+      accountId: typeof accountId === 'string' && accountId.length > 0 ? accountId : undefined,
       includeOffBudget: typeof includeOffBudget === 'boolean' ? includeOffBudget : false,
       months: typeof months === 'number' && months > 0 ? months : 12,
     };

@@ -102,6 +102,27 @@ npm start            # tsx src/index.ts (dev mode)
 - `uncategorizedOnly: true` - Returns only transactions without category assignment (both `category` and `category_name` are null/undefined)
 - Filters are composable - can combine uncategorizedOnly with other filters
 
+### Testing Guidelines
+- **Test only meaningful logic**, not TypeScript type guards or obvious behavior
+- **Avoid testing things TypeScript already guarantees** (e.g., parameter types, return types)
+- **Focus on business logic and edge cases**:
+  - Branching logic (if/else, switch statements)
+  - Non-obvious transformations or calculations
+  - Error handling for external dependencies
+  - Edge cases that could break functionality
+- **Don't test obvious mappings** (e.g., "when I pass X, I get X back")
+- **Use descriptive test names** with the class/function name in describe blocks (e.g., `describe(ClassName.name, ...)`)
+- **Examples of what NOT to test**:
+  - Simple parameter pass-through
+  - TypeScript type coercion that's guaranteed by types
+  - Empty array/object returns when that's the obvious behavior
+  - Testing every possible invalid type when TypeScript handles it
+- **Examples of what TO test**:
+  - Empty string treated as undefined (business logic)
+  - Branching behavior (accountId provided vs omitted)
+  - Invalid input validation (null/undefined checks in runtime)
+  - Non-obvious default values or transformations
+
 ## Dependencies
 - MCP: @modelcontextprotocol/sdk 1.17.4
 - Actual: @actual-app/api 25.11.0
