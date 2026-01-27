@@ -39,7 +39,7 @@ export function formatAmount(amount: number | undefined | null): string {
   };
 
   // Use optional currency symbol from environment variable
-  // Only use it if it's a non-empty string after trimming
+  // Only use it if it's a non-empty string after trimming (but preserve the original value with spaces)
   const currencySymbol = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
   const hasValidCurrencySymbol = currencySymbol !== undefined && currencySymbol.trim() !== '';
 
