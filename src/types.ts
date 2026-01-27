@@ -14,7 +14,12 @@ export interface BudgetFile {
 
 // Type definitions for tool arguments
 export const GetTransactionsArgsSchema = z.object({
-  accountId: z.string(),
+  accountId: z
+    .string()
+    .optional()
+    .describe(
+      'Account ID to fetch transactions from. If omitted, returns transactions for all on-budget accounts. Use get-accounts to discover account IDs.'
+    ),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   minAmount: z.number().optional(),
@@ -43,7 +48,12 @@ export const MonthlySummaryArgsSchema = z.object({
 export type MonthlySummaryArgs = z.infer<typeof MonthlySummaryArgsSchema>;
 
 export const BalanceHistoryArgsSchema = z.object({
-  accountId: z.string(),
+  accountId: z
+    .string()
+    .optional()
+    .describe(
+      'Account ID to fetch balance history for. If omitted, returns balance history for all accounts. Use get-accounts to discover account IDs.'
+    ),
   includeOffBudget: z.boolean().optional().default(false),
   months: z.number().optional().default(3),
 });
