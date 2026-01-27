@@ -6,57 +6,11 @@ build/
 dist/
 coverage/
 
+# Git
+.git/
+
 # Environment files
 .env
 .env.*
 !.env.example
 
-# Git
-.git/
-.github/
-.gitignore
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Documentation and config files not needed in container
-*.md
-.prettierrc
-.prettierignore
-.editorconfig
-.eslintrc*
-eslint.config.ts
-tsconfig.eslint.json
-vitest.config.ts
-renovate.json
-
-# Test files
-**/*.test.ts
-**/*.spec.ts
-**/__tests__/
-**/__mocks__/
-
-# CI/CD
-.github/
-
-# Temporary files
-tmp/
-temp/
-*.log
-*.tmp
-
-# Claude/Gemini specific files
-.claude
-.gemini
-AGENTS.md
-CLAUDE.md
-INITIAL_*.md
-issues/
-PRPs/
-examples/
-cicd.md

@@ -41,10 +41,6 @@ jobs:
             type=ref,event=pr,prefix=pr-
             # Tag branches with branch name
             type=ref,event=branch
-            # Tag semver versions (v1.2.3 -> 1.2.3, 1.2, 1, latest)
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             # Tag latest for main branch
             type=raw,value=latest,enable={{is_default_branch}}
           labels: |
