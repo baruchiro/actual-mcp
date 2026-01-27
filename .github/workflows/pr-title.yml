@@ -17,14 +17,12 @@ jobs:
           node-version: 22
 
       - name: Install commitlint
-        run: npm install --save-dev @commitlint/cli @commitlint/config-conventional
-
-      - name: Configure commitlint
         run: |
-          echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+          npm install @commitlint/cli @commitlint/config-conventional
 
       - name: Validate PR title
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
+          echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
           echo "$PR_TITLE" | npx commitlint
