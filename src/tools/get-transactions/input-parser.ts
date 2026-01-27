@@ -8,7 +8,8 @@ export class GetTransactionsInputParser {
       throw new Error('Arguments must be an object');
     }
     const argsObj = args as Record<string, unknown>;
-    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit } = argsObj;
+    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, uncategorizedOnly, limit } =
+      argsObj;
 
     return {
       accountId: typeof accountId === 'string' && accountId.length > 0 ? accountId : undefined,
@@ -18,6 +19,7 @@ export class GetTransactionsInputParser {
       maxAmount: typeof maxAmount === 'number' ? maxAmount : undefined,
       categoryName: typeof categoryName === 'string' ? categoryName : undefined,
       payeeName: typeof payeeName === 'string' ? payeeName : undefined,
+      uncategorizedOnly: typeof uncategorizedOnly === 'boolean' ? uncategorizedOnly : undefined,
       limit: typeof limit === 'number' ? limit : undefined,
     };
   }

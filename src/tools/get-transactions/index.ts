@@ -12,14 +12,15 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 export const schema = {
   name: 'get-transactions',
   description:
-    'Get transactions with optional filtering. If accountId is not provided, returns transactions for all on-budget accounts. Use get-accounts tool to discover available account IDs.',
+    'Get transactions with optional filtering. Supports filtering by date range, amount, category, payee, and uncategorized transactions. If accountId is not provided, returns transactions for all on-budget accounts. Use get-accounts tool to discover available account IDs.',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 
 export async function handler(args: GetTransactionsArgs): Promise<CallToolResult> {
   try {
     const input = new GetTransactionsInputParser().parse(args);
-    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit } = input;
+    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, uncategorizedOnly, limit } =
+      input;
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
     // Fetch transactions
@@ -40,6 +41,9 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       const lowerPayee = payeeName.toLowerCase();
       filtered = filtered.filter((t) => (t.payee_name || '').toLowerCase().includes(lowerPayee));
     }
+    if (uncategorizedOnly) {
+      filtered = filtered.filter((t) => !t.category && !t.category_name);
+    }
     if (limit && filtered.length > limit) {
       filtered = filtered.slice(0, limit);
     }
@@ -54,6 +58,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       maxAmount !== undefined ? `Max amount: $${maxAmount.toFixed(2)}` : null,
       categoryName ? `Category: ${categoryName}` : null,
       payeeName ? `Payee: ${payeeName}` : null,
+      uncategorizedOnly ? 'Uncategorized only' : null,
     ]
       .filter(Boolean)
       .join(', ');
