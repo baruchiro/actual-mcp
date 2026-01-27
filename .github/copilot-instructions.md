@@ -53,6 +53,10 @@ src/
 - `report-generator.ts` - Markdown output (optional)
 - Keep files < 500 lines (refactor if approaching)
 
+## Code Style
+- **No obvious comments**: Avoid comments that merely restate what the code does (e.g., "Mock the data fetcher", "No category - uncategorized"). Code should be self-documenting through clear naming and structure.
+- Use comments only for non-obvious business logic, complex algorithms, or important context that isn't clear from the code itself.
+
 ## Config Files
 - `tsconfig.json` - ES2022, Node16 modules, strict mode
 - `tsconfig.build.json` - Excludes tests, adds sourcemaps

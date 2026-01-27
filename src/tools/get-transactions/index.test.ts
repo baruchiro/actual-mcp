@@ -1,14 +1,9 @@
-// ----------------------------
-// GET TRANSACTIONS TOOL TESTS
-// ----------------------------
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handler } from './index.js';
 import { GetTransactionsDataFetcher } from './data-fetcher.js';
 import { GetTransactionsArgs } from '../../types.js';
 import { Transaction } from '../../core/types/domain.js';
 
-// Mock the data fetcher
 vi.mock('./data-fetcher.js', () => ({
   GetTransactionsDataFetcher: vi.fn().mockImplementation(() => ({
     fetch: vi.fn(),
@@ -47,7 +42,6 @@ describe('get-transactions tool', () => {
         date: '2025-12-02',
         amount: 10000,
         payee_name: 'Unknown Store',
-        // No category - uncategorized
       },
       {
         id: 'tx3',
@@ -55,7 +49,6 @@ describe('get-transactions tool', () => {
         date: '2025-12-03',
         amount: 7500,
         payee_name: 'Gas Station',
-        // No category - uncategorized
       },
       {
         id: 'tx4',
@@ -127,16 +120,15 @@ describe('get-transactions tool', () => {
       const args: GetTransactionsArgs = {
         accountId: 'account-1',
         uncategorizedOnly: true,
-        minAmount: 80, // $80 = 8000 cents
+        minAmount: 80,
       };
 
       const result = await handler(args);
 
       expect(result.isError).toBeUndefined();
-      // Only tx2 (10000) should match: uncategorized AND >= 8000
       expect(result.content[0].text).toContain('tx2');
       expect(result.content[0].text).not.toContain('tx1');
-      expect(result.content[0].text).not.toContain('tx3'); // 7500 < 8000
+      expect(result.content[0].text).not.toContain('tx3');
       expect(result.content[0].text).not.toContain('tx4');
       expect(result.content[0].text).toContain('Uncategorized only');
       expect(result.content[0].text).toContain('Min amount');
@@ -154,7 +146,6 @@ describe('get-transactions tool', () => {
       const result = await handler(args);
 
       expect(result.isError).toBeUndefined();
-      // Should only return the first uncategorized transaction
       expect(result.content[0].text).toContain('tx2');
       expect(result.content[0].text).not.toContain('tx3');
       expect(result.content[0].text).toContain('Matching Transactions: 1/4');
