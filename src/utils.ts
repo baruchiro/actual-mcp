@@ -32,31 +32,30 @@ export function formatAmount(amount: number | undefined | null): string {
   // Convert from cents to dollars
   const dollars = amount / 100;
 
-  // Shared number formatting configuration
-  const numberFormatConfig: Intl.NumberFormatOptions = {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  };
+  // Get optional currency code from environment variable
+  const currencyCode = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
 
-  // Use optional currency symbol from environment variable
-  // Only use it if it's a non-empty string after trimming (but preserve the original value with spaces)
-  const currencySymbol = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
-  const hasValidCurrencySymbol = currencySymbol !== undefined && currencySymbol.trim() !== '';
-
-  if (hasValidCurrencySymbol) {
-    // Format with custom currency symbol
-    const absValue = Math.abs(dollars);
-    const formatted = new Intl.NumberFormat('en-US', numberFormatConfig).format(absValue);
-
-    // Handle negative values with currency symbol before the minus sign
-    if (dollars < 0) {
-      return `-${currencySymbol}${formatted}`;
+  try {
+    if (currencyCode) {
+      // Format with currency using the provided currency code
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+      }).format(dollars);
+    } else {
+      // Format without currency
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(dollars);
     }
-    return `${currencySymbol}${formatted}`;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Failed to format amount with currency code "${currencyCode}": ${errorMessage}. ` +
+        `Please provide a valid ISO 4217 currency code (e.g., "USD", "EUR", "GBP").`
+    );
   }
-
-  // Default: no currency symbol, just the number
-  return new Intl.NumberFormat('en-US', numberFormatConfig).format(dollars);
 }
 
 // Helper to calculate start/end date strings for the N most recent months
