@@ -26,7 +26,6 @@ coverage/
 
 # Documentation and config files not needed in container
 *.md
-!README.md
 .prettierrc
 .prettierignore
 .editorconfig
