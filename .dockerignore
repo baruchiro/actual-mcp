@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+build/
+dist/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
