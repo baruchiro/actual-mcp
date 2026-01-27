@@ -21,6 +21,7 @@ export const GetTransactionsArgsSchema = z.object({
   maxAmount: z.number().optional(),
   categoryName: z.string().optional(),
   payeeName: z.string().optional(),
+  uncategorizedOnly: z.boolean().optional(),
   limit: z.number().optional(),
 });
 

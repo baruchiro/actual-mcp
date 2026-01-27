@@ -8,7 +8,8 @@ export class GetTransactionsInputParser {
       throw new Error('Arguments must be an object');
     }
     const argsObj = args as Record<string, unknown>;
-    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, limit } = argsObj;
+    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, uncategorizedOnly, limit } =
+      argsObj;
     if (!accountId || typeof accountId !== 'string') {
       throw new Error('accountId is required and must be a string');
     }
@@ -20,6 +21,7 @@ export class GetTransactionsInputParser {
       maxAmount: typeof maxAmount === 'number' ? maxAmount : undefined,
       categoryName: typeof categoryName === 'string' ? categoryName : undefined,
       payeeName: typeof payeeName === 'string' ? payeeName : undefined,
+      uncategorizedOnly: typeof uncategorizedOnly === 'boolean' ? uncategorizedOnly : undefined,
       limit: typeof limit === 'number' ? limit : undefined,
     };
   }

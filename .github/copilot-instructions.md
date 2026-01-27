@@ -53,6 +53,10 @@ src/
 - `report-generator.ts` - Markdown output (optional)
 - Keep files < 500 lines (refactor if approaching)
 
+## Code Style
+- **No obvious comments**: Avoid comments that merely restate what the code does (e.g., "Mock the data fetcher", "No category - uncategorized"). Code should be self-documenting through clear naming and structure.
+- Use comments only for non-obvious business logic, complex algorithms, or important context that isn't clear from the code itself.
+
 ## Config Files
 - `tsconfig.json` - ES2022, Node16 modules, strict mode
 - `tsconfig.build.json` - Excludes tests, adds sourcemaps
@@ -90,6 +94,13 @@ npm start            # tsx src/index.ts (dev mode)
 - Mock with `vi.mock()`
 - Coverage: happy path + edge case + error case
 - Only `src/core/` and `src/tools/` measured
+- Test logic, not declarative schemas
+
+## Tool Features
+### get-transactions
+- Filters: date range, amount, category, payee, uncategorizedOnly, limit
+- `uncategorizedOnly: true` - Returns only transactions without category assignment (both `category` and `category_name` are null/undefined)
+- Filters are composable - can combine uncategorizedOnly with other filters
 
 ## Dependencies
 - MCP: @modelcontextprotocol/sdk 1.17.4
