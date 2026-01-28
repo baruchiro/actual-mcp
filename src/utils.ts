@@ -32,18 +32,15 @@ export function formatAmount(amount: number | undefined | null): string {
   // Convert from cents to dollars
   const dollars = amount / 100;
 
-  // Get optional currency code from environment variable
   const currencyCode = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
 
   try {
-    if (currencyCode && currencyCode.trim() !== '') {
-      // Format with currency using the provided currency code
+    if (currencyCode?.trim()) {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: currencyCode.trim(),
       }).format(dollars);
     } else {
-      // Format without currency
       return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
