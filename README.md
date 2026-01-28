@@ -62,7 +62,7 @@ The Actual Budget MCP Server allows you to interact with your personal financial
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v16 or higher)
+- [Node.js](https://nodejs.org/) (v24 or higher)
 - [Actual Budget](https://actualbudget.com/) installed and configured
 - [Claude Desktop](https://claude.ai/download) or another MCP-compatible client
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (optional)

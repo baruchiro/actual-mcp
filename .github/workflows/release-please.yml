@@ -27,8 +27,11 @@ jobs:
       - uses: actions/setup-node@v6
         if: ${{ steps.release.outputs.release_created }}
         with:
-          node-version: 22
+          node-version-file: '.node-version'
           registry-url: https://registry.npmjs.org/
+      - name: Update npm to latest version
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm install -g npm@latest
       - run: npm ci
         if: ${{ steps.release.outputs.release_created }}
       - run: npm publish
