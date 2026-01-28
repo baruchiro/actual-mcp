@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.9.0](https://github.com/baruchiro/actual-mcp/compare/v1.8.0...v1.9.0) (2026-01-28)
+
+
+### Features
+
+* add uncategorized transaction filtering to get-transactions tool ([#12](https://github.com/baruchiro/actual-mcp/issues/12)) ([93aebfa](https://github.com/baruchiro/actual-mcp/commit/93aebfa25011583e8da7588a9aa2ef26b5fa193f))
+* make accountId optional in get-transactions and balance-history tools ([#16](https://github.com/baruchiro/actual-mcp/issues/16)) ([86846c7](https://github.com/baruchiro/actual-mcp/commit/86846c7e2f91e34820787997a29886e5270f69a6))
+* support optional currency formatting via ACTUAL_MCP_CURRENCY_SYMBOL env var ([#20](https://github.com/baruchiro/actual-mcp/issues/20)) ([2a4b85d](https://github.com/baruchiro/actual-mcp/commit/2a4b85dbb2cff43d54731bb822006e0e3dd7e2eb))
+
 ## [1.8.0](https://github.com/baruchiro/actual-mcp/compare/v1.7.0...v1.8.0) (2026-01-22)
 
 
