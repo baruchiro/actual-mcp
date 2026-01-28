@@ -12,7 +12,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 export const schema = {
   name: 'get-transactions',
   description:
-    'Get transactions for an account with optional filtering. Supports filtering by date range, amount, category, payee, and uncategorized transactions.',
+    'Get transactions with optional filtering. Supports filtering by date range, amount, category, payee, and uncategorized transactions. If accountId is not provided, returns transactions for all on-budget accounts. Use get-accounts tool to discover available account IDs.',
   inputSchema: zodToJsonSchema(GetTransactionsArgsSchema) as ToolInput,
 };
 
