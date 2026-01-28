@@ -29,15 +29,10 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
-      - name: Update npm to latest version
-        if: ${{ steps.release.outputs.release_created }}
-        run: npm install -g npm@latest
       - run: npm ci
         if: ${{ steps.release.outputs.release_created }}
-      - run: npm publish --provenance --access public
+      - run: npm publish
         if: ${{ steps.release.outputs.release_created }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   docker-release:
     needs: release-please
