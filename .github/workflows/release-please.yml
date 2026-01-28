@@ -29,6 +29,9 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
+      - name: Update npm to latest version
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm install -g npm@latest
       - run: npm ci
         if: ${{ steps.release.outputs.release_created }}
       - run: npm publish
