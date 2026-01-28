@@ -31,10 +31,28 @@ export function formatAmount(amount: number | undefined | null): string {
 
   // Convert from cents to dollars
   const dollars = amount / 100;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(dollars);
+
+  const currencyCode = process.env.ACTUAL_MCP_CURRENCY_SYMBOL;
+
+  try {
+    if (currencyCode?.trim()) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode.trim(),
+      }).format(dollars);
+    } else {
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(dollars);
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Failed to format amount with currency code "${currencyCode}": ${errorMessage}. ` +
+        `Please provide a valid ISO 4217 currency code (e.g., "USD", "EUR", "GBP").`
+    );
+  }
 }
 
 // Helper to calculate start/end date strings for the N most recent months

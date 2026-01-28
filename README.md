@@ -131,6 +131,17 @@ If your Actual setup requires a different password to unlock the local/encrypted
 export ACTUAL_BUDGET_ENCRYPTION_PASSWORD="your-encryption-password"
 ```
 
+Optional: currency symbol
+
+Actual Budget is currency-agnostic. By default, formatted amounts are shown without a currency symbol (e.g., `1,234.56`). If you want to display amounts with currency formatting, you can set `ACTUAL_MCP_CURRENCY_SYMBOL` to a valid ISO 4217 currency code:
+
+```bash
+# Choose one of the following currency codes:
+export ACTUAL_MCP_CURRENCY_SYMBOL="USD"  # For US Dollars: $1,234.56
+# export ACTUAL_MCP_CURRENCY_SYMBOL="EUR"  # For Euros: €1,234.56
+# export ACTUAL_MCP_CURRENCY_SYMBOL="GBP"  # For British Pounds: £1,234.56
+```
+
 ## Usage with Claude Desktop
 
 To use this server with Claude Desktop, add it to your Claude configuration:
