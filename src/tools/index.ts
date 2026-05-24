@@ -79,20 +79,24 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
    * Handler for calling tools
    */
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name: toolName, arguments: args } = request.params;
     try {
       await initActualApi();
-      const { name, arguments: args } = request.params;
 
-      const tool = allTools.find((t) => t.schema.name === name);
+      const tool = allTools.find((t) => t.schema.name === toolName);
       if (!tool) {
-        return error(`Unknown tool ${name}`);
+        return error(`Unknown tool ${toolName}`, { toolName, code: 'unknown_tool' });
       }
 
+      // Reason: must `await` so any rejection from the handler is caught here
+      // instead of becoming an unhandled rejection (which would crash the
+      // process) and so the `finally` block doesn't shut down the API
+      // before the handler completes.
       // @ts-expect-error: Argument type is handled by Zod schema validation
-      return tool.handler(args);
+      return await tool.handler(args);
     } catch (err) {
-      console.error(`Error executing tool ${request.params.name}:`, err);
-      return errorFromCatch(err);
+      console.error(`Error executing tool ${toolName}:`, err);
+      return errorFromCatch(err, { toolName });
     } finally {
       await shutdownActualApi();
     }

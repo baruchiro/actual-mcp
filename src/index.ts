@@ -350,6 +350,17 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
+// Backstop: keep the process alive when something rejects without a handler
+// or throws synchronously outside any try/catch. Without these, a single bad
+// tool call (or upstream API misbehavior) crashes the entire MCP server.
+process.on('unhandledRejection', (reason) => {
+  console.error(`Unhandled promise rejection: ${toErrorMessage(reason)}`);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error(`Uncaught exception: ${toErrorMessage(err)}`);
+});
+
 main()
   .then(() => {
     if (!useSse) {
