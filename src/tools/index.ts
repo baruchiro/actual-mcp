@@ -88,10 +88,6 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
         return error(`Unknown tool ${toolName}`, { toolName, code: 'unknown_tool' });
       }
 
-      // Reason: must `await` so any rejection from the handler is caught here
-      // instead of becoming an unhandled rejection (which would crash the
-      // process) and so the `finally` block doesn't shut down the API
-      // before the handler completes.
       // @ts-expect-error: Argument type is handled by Zod schema validation
       return await tool.handler(args);
     } catch (err) {
