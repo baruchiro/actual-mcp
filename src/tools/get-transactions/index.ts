@@ -42,8 +42,6 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       filtered = filtered.filter((t) => (t.payee_name || '').toLowerCase().includes(lowerPayee));
     }
     if (uncategorizedOnly) {
-      // # Reason: Transfers (transactions with transfer_id) are handled by Actual's transfer mechanic,
-      // not by category assignment, so they should not appear in "uncategorized" results.
       filtered = filtered.filter((t) => !t.category && !t.category_name && !t.transfer_id);
     }
     if (limit && filtered.length > limit) {

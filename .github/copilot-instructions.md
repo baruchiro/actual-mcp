@@ -99,7 +99,7 @@ npm start            # tsx src/index.ts (dev mode)
 ## Tool Features
 ### get-transactions
 - Filters: date range, amount, category, payee, uncategorizedOnly, limit
-- `uncategorizedOnly: true` - Returns only transactions without category assignment (both `category` and `category_name` are null/undefined)
+- `uncategorizedOnly: true` - Returns only transactions without category assignment (both `category` and `category_name` are null/undefined). Transfers (`transfer_id` set) are excluded since they cannot be categorized.
 - Filters are composable - can combine uncategorizedOnly with other filters
 
 ### Testing Guidelines
