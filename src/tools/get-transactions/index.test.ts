@@ -150,6 +150,71 @@ describe('get-transactions tool', () => {
       expect(result.content[0].text).not.toContain('tx3');
       expect(result.content[0].text).toContain('Matching Transactions: 1/4');
     });
+
+    it('should exclude transfers from uncategorizedOnly results', async () => {
+      const withTransfers: Transaction[] = [
+        {
+          id: 'tx-uncat',
+          account: 'account-1',
+          date: '2025-12-01',
+          amount: 5000,
+          payee_name: 'Unknown Store',
+        },
+        {
+          id: 'tx-transfer-out',
+          account: 'account-1',
+          date: '2025-12-02',
+          amount: -20000,
+          payee_name: 'Credit Card',
+          transfer_id: 'tx-transfer-in',
+        },
+        {
+          id: 'tx-transfer-in',
+          account: 'account-2',
+          date: '2025-12-02',
+          amount: 20000,
+          payee_name: 'Checking',
+          transfer_id: 'tx-transfer-out',
+        },
+      ];
+      mockFetch.mockResolvedValue(withTransfers);
+
+      const args: GetTransactionsArgs = {
+        accountId: 'account-1',
+        uncategorizedOnly: true,
+      };
+
+      const result = await handler(args);
+
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain('tx-uncat');
+      expect(result.content[0].text).not.toContain('tx-transfer-out');
+      expect(result.content[0].text).not.toContain('tx-transfer-in');
+      expect(result.content[0].text).toContain('Matching Transactions: 1/3');
+    });
+
+    it('should include transfers when uncategorizedOnly is not set', async () => {
+      const withTransfers: Transaction[] = [
+        {
+          id: 'tx-transfer-out',
+          account: 'account-1',
+          date: '2025-12-02',
+          amount: -20000,
+          payee_name: 'Credit Card',
+          transfer_id: 'tx-transfer-in',
+        },
+      ];
+      mockFetch.mockResolvedValue(withTransfers);
+
+      const args: GetTransactionsArgs = {
+        accountId: 'account-1',
+      };
+
+      const result = await handler(args);
+
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain('tx-transfer-out');
+    });
   });
 
   describe('handler - edge cases', () => {
