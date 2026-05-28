@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.1](https://github.com/baruchiro/actual-mcp/compare/v1.10.0...v1.10.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **get-transactions:** exclude transfers from uncategorizedOnly results ([#28](https://github.com/baruchiro/actual-mcp/issues/28)) ([195e3e1](https://github.com/baruchiro/actual-mcp/commit/195e3e1c391bce3d74a0f6a636d38065e5e08112))
+* prevent server crash and opaque errors on tool failure ([#25](https://github.com/baruchiro/actual-mcp/issues/25)) ([69bf7fc](https://github.com/baruchiro/actual-mcp/commit/69bf7fc0b66ec194392e90aa76213e89f48205d0))
+
 ## [1.10.0](https://github.com/baruchiro/actual-mcp/compare/v1.9.0...v1.10.0) (2026-01-28)
 
 
