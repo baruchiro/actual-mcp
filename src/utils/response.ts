@@ -134,20 +134,28 @@ export function normalizeError(err: unknown): NormalizedError {
     const messageCandidates = [record.message, record.error, record.reason, record.description, record.detail];
     const message = messageCandidates.find((value): value is string => typeof value === 'string' && value.length > 0);
     const code = typeof record.code === 'string' ? record.code : undefined;
+    // Reason: preserve name/stack when a non-Error object is thrown (e.g.
+    // a serialized error), so errorFromCatch() can still log the stack under
+    // the same correlation id and keep the traceability path intact.
+    const extras = {
+      ...(typeof record.name === 'string' ? { name: record.name } : {}),
+      ...(typeof record.stack === 'string' ? { stack: record.stack } : {}),
+      ...(code ? { code } : {}),
+    };
     if (message) {
-      return { message, ...(code ? { code } : {}) };
+      return { message, ...extras };
     }
     // No usable string field — fall through to JSON serialization so the
     // client at least sees the shape of the object instead of "[object Object]".
     try {
       const serialized = JSON.stringify(err);
       if (serialized && serialized !== '{}') {
-        return { message: serialized, ...(code ? { code } : {}) };
+        return { message: serialized, ...extras };
       }
     } catch {
       // circular or otherwise unserializable
     }
-    return { message: 'Unknown error (non-serializable object thrown)', ...(code ? { code } : {}) };
+    return { message: 'Unknown error (non-serializable object thrown)', ...extras };
   }
 
   return { message: String(err) };

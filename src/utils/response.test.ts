@@ -112,6 +112,11 @@ describe('response utilities', () => {
       expect(normalizeError({ reason: 'rejected' })).toMatchObject({ message: 'rejected' });
       expect(normalizeError({ error: 'broke' })).toMatchObject({ message: 'broke' });
     });
+
+    it('preserves name and stack from non-Error objects', () => {
+      const result = normalizeError({ message: 'boom', name: 'CustomError', stack: 'CustomError: boom\n  at x' });
+      expect(result).toMatchObject({ message: 'boom', name: 'CustomError', stack: 'CustomError: boom\n  at x' });
+    });
   });
 
   describe('errorFromCatch', () => {
@@ -125,6 +130,12 @@ describe('response utilities', () => {
       const result = errorFromCatch(new Error('boom'));
       const id = result._meta?.correlationId as string;
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining(`[${id}] stack:`));
+    });
+
+    it('logs the stack from a thrown plain object under the same correlation id', () => {
+      const result = errorFromCatch({ message: 'boom', stack: 'CustomError: boom\n  at x' });
+      const id = result._meta?.correlationId as string;
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining(`[${id}] stack: CustomError: boom`));
     });
 
     it('never produces "[object Object]" for plain object rejections', () => {
