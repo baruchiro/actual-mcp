@@ -2,6 +2,7 @@
 // RESPONSE UTILITIES
 // ----------------------------
 
+import { randomUUID } from 'node:crypto';
 import { CallToolResult, TextContent, ImageContent, AudioContent } from '@modelcontextprotocol/sdk/types.js';
 
 /**
@@ -84,19 +85,24 @@ export function successWithJson<T>(data: T): CallToolResult {
  * @returns An error response object
  */
 export function error(message: string, context: ErrorContext = {}): CallToolResult {
+  // Reason: every failure gets a correlation id that is both returned to the
+  // client (as a human-quotable `ref:` in the text and as `_meta.correlationId`)
+  // and logged server-side under the same id. This lets a user report a failure
+  // by its ref and a maintainer grep the matching log line, without the user
+  // needing container/log access.
+  const correlationId = randomUUID();
   const prefix = context.toolName ? `Error in ${context.toolName}` : 'Error';
   const codeSuffix = context.code ? ` [${context.code}]` : '';
-  const result: CallToolResult = {
+  console.error(`[${correlationId}] ${prefix}${codeSuffix}: ${message}`);
+  return {
     isError: true,
-    content: [{ type: 'text', text: `${prefix}${codeSuffix}: ${message}` }],
-  };
-  if (context.code || context.toolName) {
-    result._meta = {
+    content: [{ type: 'text', text: `${prefix}${codeSuffix} (ref: ${correlationId}): ${message}` }],
+    _meta: {
+      correlationId,
       ...(context.code ? { code: context.code } : {}),
       ...(context.toolName ? { tool: context.toolName } : {}),
-    };
-  }
-  return result;
+    },
+  };
 }
 
 /**
@@ -158,8 +164,15 @@ export function normalizeError(err: unknown): NormalizedError {
  */
 export function errorFromCatch(err: unknown, context: ErrorContext = {}): CallToolResult {
   const normalized = normalizeError(err);
-  return error(normalized.message, {
+  const result = error(normalized.message, {
     ...context,
     code: context.code ?? normalized.code,
   });
+  if (normalized.stack) {
+    // Reason: keep the full stack out of the client response but log it under
+    // the same correlation id, so the user-facing ref traces back to the trace.
+    const correlationId = (result._meta as { correlationId?: string } | undefined)?.correlationId;
+    console.error(`[${correlationId ?? 'unknown'}] stack: ${normalized.stack}`);
+  }
+  return result;
 }

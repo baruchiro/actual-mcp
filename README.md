@@ -326,6 +326,13 @@ Since MCP servers communicate over stdio, debugging can be challenging. You can 
 npx @modelcontextprotocol/inspector node build/index.js
 ```
 
+When a tool call fails, the server returns a structured error instead of crashing. The
+error text includes the failing tool name, a stable machine-readable code (e.g.
+`auth_required`, `unknown_tool`), and a correlation id (`ref: <uuid>`). The same
+correlation id is also exposed in the response `_meta` (`correlationId`) and written to
+the server logs, so a reported `ref:` can be traced directly to its server-side stack
+trace without needing container access.
+
 ## Project Structure
 
 - `index.ts` - Main server implementation
