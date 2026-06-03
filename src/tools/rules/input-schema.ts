@@ -55,7 +55,21 @@ export const RuleInputSchema = {
               { type: 'string' },
               { type: 'number' },
               { type: 'array', items: { type: 'string' } },
-              { type: 'array', items: { type: 'number' } },
+              {
+                type: 'object',
+                required: ['num1', 'num2'],
+                properties: {
+                  num1: {
+                    type: ['number', 'string'],
+                    description: 'Lower bound: amount in cents, or YYYY-MM-DD date.',
+                  },
+                  num2: {
+                    type: ['number', 'string'],
+                    description: 'Upper bound: amount in cents, or YYYY-MM-DD date.',
+                  },
+                },
+                description: 'Range object used for the isbetween operator.',
+              },
             ],
             description: `Condition value. Format depends on field and operator types:
               account, category, payee: ID in UUID format,
@@ -63,7 +77,7 @@ export const RuleInputSchema = {
               amount: number,
               notes: string,
               string[] is only used for oneOf and notOneOf,
-              number[] is only used for isbetween, as a two-element [low, high] array (it is converted internally to the { num1, num2 } shape the API expects).`,
+              { num1, num2 } object is only used for isbetween (num1/num2 are amounts in cents, or YYYY-MM-DD dates).`,
           },
         },
       },
