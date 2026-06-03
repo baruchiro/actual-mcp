@@ -5,6 +5,7 @@
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { createRule } from '../../../actual-api.js';
 import { RuleInputSchema } from '../input-schema.js';
+import { normalizeRuleArgs } from '../normalize-rule.js';
 import { RuleEntity } from '@actual-app/api/@types/loot-core/src/types/models/rule.js';
 
 export const schema = {
@@ -17,7 +18,7 @@ export async function handler(
   args: Record<string, unknown>
 ): Promise<ReturnType<typeof successWithJson> | ReturnType<typeof errorFromCatch>> {
   try {
-    const { id }: RuleEntity = await createRule(args);
+    const { id }: RuleEntity = await createRule(normalizeRuleArgs(args));
 
     return successWithJson('Successfully created rule ' + id);
   } catch (err) {

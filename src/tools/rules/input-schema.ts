@@ -63,7 +63,7 @@ export const RuleInputSchema = {
               amount: number,
               notes: string,
               string[] is only used for oneOf and notOneOf,
-              number[] is only used for isbetween.`,
+              number[] is only used for isbetween, as a two-element [low, high] array (it is converted internally to the { num1, num2 } shape the API expects).`,
           },
         },
       },

@@ -5,6 +5,7 @@
 import { successWithJson, errorFromCatch } from '../../../utils/response.js';
 import { updateRule } from '../../../actual-api.js';
 import { RuleInputSchema } from '../input-schema.js';
+import { normalizeRuleArgs } from '../normalize-rule.js';
 
 export const schema = {
   name: 'update-rule',
@@ -20,7 +21,7 @@ export async function handler(
       return errorFromCatch('id is required and must be a string');
     }
 
-    await updateRule(args);
+    await updateRule(normalizeRuleArgs(args));
 
     return successWithJson('Successfully updated rule ' + args.id);
   } catch (err) {
