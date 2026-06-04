@@ -32,6 +32,10 @@ export async function initActualApi(): Promise<void> {
     return;
   }
 
+  // Reason: mark initialization as in-progress before any await so concurrent
+  // callers actually hit the wait-loop above instead of racing into init().
+  initializing = true;
+  initializationError = null;
   try {
     console.error('Initializing Actual Budget API...');
     const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
@@ -77,8 +81,13 @@ export async function initActualApi(): Promise<void> {
  */
 export async function shutdownActualApi(): Promise<void> {
   if (!initialized) return;
-  await api.shutdown();
-  initialized = false;
+  try {
+    await api.shutdown();
+  } catch (err) {
+    console.error('Error shutting down Actual Budget API:', err);
+  } finally {
+    initialized = false;
+  }
 }
 
 // ----------------------------
