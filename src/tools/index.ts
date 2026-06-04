@@ -4,7 +4,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { initActualApi, shutdownActualApi } from '../actual-api.js';
+import { initActualApi, scheduleShutdown, syncBudget } from '../actual-api.js';
 import { error, errorFromCatch } from '../utils/response.js';
 
 import * as balanceHistory from './balance-history/index.js';
@@ -81,7 +81,10 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name: toolName, arguments: args } = request.params;
     try {
-      await initActualApi();
+      const reused = await initActualApi();
+      if (reused) {
+        await syncBudget();
+      }
 
       const tool = allTools.find((t) => t.schema.name === toolName);
       if (!tool) {
@@ -94,7 +97,7 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       console.error(`Error executing tool ${toolName}:`, err);
       return errorFromCatch(err, { toolName });
     } finally {
-      await shutdownActualApi();
+      scheduleShutdown();
     }
   });
 };

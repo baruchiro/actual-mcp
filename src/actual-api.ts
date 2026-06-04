@@ -14,15 +14,34 @@ import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
 let initPromise: Promise<void> | null = null;
+let shutdownTimer: ReturnType<typeof setTimeout> | null = null;
 
-export function initActualApi(): Promise<void> {
+const DEFAULT_CACHE_TTL_SECONDS = 60;
+
+function getCacheTtlMs(): number {
+  const raw = process.env.ACTUAL_MCP_CACHE_TTL_SECONDS;
+  if (raw === undefined || raw.trim() === '') {
+    return DEFAULT_CACHE_TTL_SECONDS * 1000;
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    console.error(`Invalid ACTUAL_MCP_CACHE_TTL_SECONDS="${raw}"; falling back to ${DEFAULT_CACHE_TTL_SECONDS}s`);
+    return DEFAULT_CACHE_TTL_SECONDS * 1000;
+  }
+  return parsed * 1000;
+}
+
+export async function initActualApi(): Promise<boolean> {
+  cancelScheduledShutdown();
+  const reused = initPromise !== null;
   if (!initPromise) {
     initPromise = loadBudget();
     initPromise.catch(() => {
       initPromise = null;
     });
   }
-  return initPromise;
+  await initPromise;
+  return reused;
 }
 
 async function loadBudget(): Promise<void> {
@@ -57,6 +76,7 @@ async function loadBudget(): Promise<void> {
 }
 
 export async function shutdownActualApi(): Promise<void> {
+  cancelScheduledShutdown();
   const pending = initPromise;
   if (!pending) return;
   initPromise = null;
@@ -69,6 +89,36 @@ export async function shutdownActualApi(): Promise<void> {
     await api.shutdown();
   } catch (err) {
     console.error('Error shutting down Actual Budget API:', err);
+  }
+}
+
+export function cancelScheduledShutdown(): void {
+  if (shutdownTimer) {
+    clearTimeout(shutdownTimer);
+    shutdownTimer = null;
+  }
+}
+
+export function scheduleShutdown(): void {
+  cancelScheduledShutdown();
+  const ttlMs = getCacheTtlMs();
+  if (ttlMs <= 0) {
+    void shutdownActualApi();
+    return;
+  }
+  shutdownTimer = setTimeout(() => {
+    shutdownTimer = null;
+    void shutdownActualApi();
+  }, ttlMs);
+  shutdownTimer.unref?.();
+}
+
+export async function syncBudget(): Promise<void> {
+  if (!initPromise) return;
+  try {
+    await api.sync();
+  } catch (err) {
+    console.error('Error syncing Actual Budget data:', err);
   }
 }
 
