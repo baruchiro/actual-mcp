@@ -194,9 +194,24 @@ async function main(): Promise<void> {
       const sseTransport = new SSEServerTransport(`/messages?connectionId=${connectionId}`, res);
       legacySseConnections.set(connectionId, { server: connServer, transport: sseTransport });
 
-      connServer.connect(sseTransport).then(() => {
-        process.stderr.write(`Legacy SSE connection established (connectionId ${connectionId})\n`);
-      });
+      // Reason: handle connect rejection so a failed connection doesn't leave a
+      // dead entry in legacySseConnections that /messages could later route to.
+      void connServer
+        .connect(sseTransport)
+        .then(() => {
+          process.stderr.write(`Legacy SSE connection established (connectionId ${connectionId})\n`);
+        })
+        .catch((error: unknown) => {
+          legacySseConnections.delete(connectionId);
+          process.stderr.write(
+            `Failed to connect legacy SSE transport (connectionId ${connectionId}): ${toErrorMessage(error)}\n`
+          );
+          if (!res.headersSent) {
+            res.status(500).end();
+          } else {
+            res.end();
+          }
+        });
 
       res.on('close', () => {
         legacySseConnections.delete(connectionId);

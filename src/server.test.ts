@@ -1,5 +1,6 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { describe, expect, it, vi } from 'vitest';
+import { SetLevelRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createServer } from './server.js';
 
 vi.mock('./resources.js', () => ({
@@ -19,7 +20,14 @@ import { setupTools } from './tools/index.js';
 import { setupPrompts } from './prompts.js';
 
 describe('createServer', () => {
-  it('returns a configured Server instance (happy path)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.mocked(setupResources).mockReset();
+    vi.mocked(setupTools).mockReset();
+    vi.mocked(setupPrompts).mockReset();
+  });
+
+  it('wires up resources, tools, and prompts on the returned server (happy path)', () => {
     const server = createServer({ enableWrite: false });
 
     expect(server).toBeInstanceOf(Server);
@@ -28,24 +36,38 @@ describe('createServer', () => {
     expect(setupPrompts).toHaveBeenCalledWith(server);
   });
 
-  it('passes enableWrite: true through to setupTools', () => {
-    vi.mocked(setupTools).mockClear();
-    const server = createServer({ enableWrite: true });
-
-    expect(setupTools).toHaveBeenCalledWith(server, true);
-  });
-
-  it('creates an independent instance per call (no shared state across connections)', () => {
-    vi.mocked(setupResources).mockClear();
-    vi.mocked(setupTools).mockClear();
-    vi.mocked(setupPrompts).mockClear();
-
+  it('creates an independent instance per call so concurrent connections never share state (edge case)', () => {
     const server1 = createServer({ enableWrite: false });
     const server2 = createServer({ enableWrite: true });
 
     expect(server1).not.toBe(server2);
-    expect(setupResources).toHaveBeenCalledTimes(2);
-    expect(setupTools).toHaveBeenCalledTimes(2);
-    expect(setupPrompts).toHaveBeenCalledTimes(2);
+    // enableWrite must be threaded through per instance.
+    expect(setupTools).toHaveBeenNthCalledWith(1, server1, false);
+    expect(setupTools).toHaveBeenNthCalledWith(2, server2, true);
+  });
+
+  it('registers a SetLevel handler that logs to stderr and returns an empty result', () => {
+    // Capture the handler registered for the logging/setLevel request.
+    const setRequestHandlerSpy = vi.spyOn(Server.prototype, 'setRequestHandler');
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+
+    createServer({ enableWrite: false });
+
+    const registration = setRequestHandlerSpy.mock.calls.find(([schema]) => schema === SetLevelRequestSchema);
+    expect(registration).toBeDefined();
+
+    const handler = registration![1] as unknown as (request: { params: { level: string } }, extra: unknown) => unknown;
+    const result = handler({ params: { level: 'debug' } }, {});
+
+    expect(result).toEqual({});
+    expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('debug'));
+  });
+
+  it('propagates errors from setup steps so a misconfigured server fails fast (failure case)', () => {
+    vi.mocked(setupTools).mockImplementationOnce(() => {
+      throw new Error('tool setup failed');
+    });
+
+    expect(() => createServer({ enableWrite: false })).toThrow('tool setup failed');
   });
 });
