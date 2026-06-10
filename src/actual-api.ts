@@ -13,36 +13,20 @@ import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
-// API initialization state. A single in-flight/resolved init promise is shared
-// by every caller, so concurrent calls await the same initialization instead of
-// racing into api.init(). It is cleared on failure (so a later call can retry)
-// and on shutdown.
+// Shared init promise: concurrent callers await the same initialization. Cleared
+// on failure (to allow retry) and on shutdown.
 let initPromise: Promise<void> | null = null;
 
-/**
- * Initialize the Actual Budget API.
- *
- * Concurrent callers all await the same memoized initialization promise. The
- * cached promise is cleared if initialization fails, so a later call can retry.
- *
- * @returns A promise that resolves once the API is initialized and a budget is loaded.
- */
 export function initActualApi(): Promise<void> {
   if (!initPromise) {
     initPromise = loadBudget();
-    // Reason: drop the cached promise on failure so a later call can retry init.
     initPromise.catch(() => {
-      initPromise = null;
+      initPromise = null; // allow retry after a failed init
     });
   }
   return initPromise;
 }
 
-/**
- * Perform the one-time API init and budget download.
- *
- * Internal: callers should use {@link initActualApi}, which memoizes this.
- */
 async function loadBudget(): Promise<void> {
   console.error('Initializing Actual Budget API...');
   const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
@@ -60,7 +44,6 @@ async function loadBudget(): Promise<void> {
     throw new Error('No budgets found. Please create a budget in Actual first.');
   }
 
-  // Use specified budget or the first one
   const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
   console.error(`Loading budget: ${budgetId}`);
   await api.downloadBudget(
@@ -75,18 +58,12 @@ async function loadBudget(): Promise<void> {
   console.error('Actual Budget API initialized successfully');
 }
 
-/**
- * Shutdown the Actual Budget API.
- */
 export async function shutdownActualApi(): Promise<void> {
   const pending = initPromise;
   if (!pending) return;
   initPromise = null;
   try {
-    // Reason: wait for any in-flight init to settle so we never call api.init()
-    // and api.shutdown() concurrently. A failed init means there's nothing to
-    // shut down.
-    await pending;
+    await pending; // let any in-flight init finish so init/shutdown don't race
   } catch {
     return;
   }

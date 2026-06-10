@@ -169,8 +169,7 @@ async function main(): Promise<void> {
       process.stderr.write('Bearer authentication disabled - endpoints are public\n');
     }
 
-    // Reason: each connection/session gets its own Server + transport so concurrent
-    // clients can't overwrite each other's transports or logging state (#137).
+    // Per-connection Server + transport so concurrent clients don't clobber each other (#137).
     const legacySseConnections = new Map<string, { server: Server; transport: SSEServerTransport }>();
     const streamableSessions = new Map<string, { server: Server; transport: StreamableHTTPServerTransport }>();
 
@@ -194,8 +193,7 @@ async function main(): Promise<void> {
       const sseTransport = new SSEServerTransport(`/messages?connectionId=${connectionId}`, res);
       legacySseConnections.set(connectionId, { server: connServer, transport: sseTransport });
 
-      // Reason: handle connect rejection so a failed connection doesn't leave a
-      // dead entry in legacySseConnections that /messages could later route to.
+      // Clean up on connect failure so /messages can't route to a dead connection.
       void connServer
         .connect(sseTransport)
         .then(() => {
@@ -250,11 +248,9 @@ async function main(): Promise<void> {
               },
             });
 
-            // Reason: only remove the session from the map here. Calling
-            // sessionServer.close() in this handler would re-enter
-            // Server.close() -> transport.close() -> onclose, recursing until
-            // the process crashes with a stack overflow on disconnect (#171).
-            // Session-server lifecycle is handled by onsessionclosed above.
+            // Only drop the session here; calling sessionServer.close() would
+            // recurse via transport.close() -> onclose and crash (#171). Server
+            // lifecycle is handled by onsessionclosed above.
             streamableTransport.onclose = () => {
               const activeSessionId = streamableTransport.sessionId;
               if (activeSessionId) {
@@ -354,9 +350,7 @@ async function main(): Promise<void> {
   }
 }
 
-// Backstop: keep the process alive when something rejects without a handler
-// or throws synchronously outside any try/catch. Without these, a single bad
-// tool call (or upstream API misbehavior) crashes the entire MCP server.
+// Backstops so a stray rejection/throw doesn't crash the whole MCP server.
 process.on('unhandledRejection', (reason) => {
   console.error(`Unhandled promise rejection: ${toErrorMessage(reason)}`);
 });

@@ -5,10 +5,8 @@ import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 
-// Reason: read the version from package.json at runtime rather than importing it.
-// A static JSON import would pull package.json (outside rootDir: ./src) into the
-// compilation and break the build (TS6059). Resolving relative to import.meta.url
-// works both from build/ (build/../package.json) and from src/ under tests.
+// Read the version at runtime; a static JSON import of package.json (outside
+// rootDir: ./src) would break the build (TS6059).
 const { version: SERVER_VERSION } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
   version: string;
 };
@@ -18,13 +16,8 @@ interface CreateServerOptions {
 }
 
 /**
- * Creates and configures a new MCP Server instance with all resources, tools, and prompts.
- *
- * A fresh instance is created per connection/session so that concurrent HTTP/SSE
- * clients never share transports or logging state with one another.
- *
- * @param options - Server configuration options
- * @returns A fully configured Server instance ready to be connected to a transport
+ * Create a fresh MCP Server per connection/session so concurrent HTTP/SSE clients
+ * never share transports or logging state.
  */
 export function createServer(options: CreateServerOptions): Server {
   const server = new Server(
@@ -47,8 +40,7 @@ export function createServer(options: CreateServerOptions): Server {
   setupPrompts(server);
 
   server.setRequestHandler(SetLevelRequestSchema, (request) => {
-    // Reason: write directly to stderr instead of overriding console, which would
-    // race across concurrent connections sharing the global console object.
+    // stderr, not console: avoids races across concurrent connections.
     process.stderr.write(`--- Logging level: ${request.params.level}\n`);
     return {};
   });
