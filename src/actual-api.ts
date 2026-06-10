@@ -79,8 +79,17 @@ async function loadBudget(): Promise<void> {
  * Shutdown the Actual Budget API.
  */
 export async function shutdownActualApi(): Promise<void> {
-  if (!initPromise) return;
+  const pending = initPromise;
+  if (!pending) return;
   initPromise = null;
+  try {
+    // Reason: wait for any in-flight init to settle so we never call api.init()
+    // and api.shutdown() concurrently. A failed init means there's nothing to
+    // shut down.
+    await pending;
+  } catch {
+    return;
+  }
   try {
     await api.shutdown();
   } catch (err) {

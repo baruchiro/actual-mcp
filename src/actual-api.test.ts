@@ -104,4 +104,28 @@ describe('actual-api init/shutdown stability (#96)', () => {
     await expect(initActualApi()).resolves.toBeUndefined();
     expect(mockApi.init).toHaveBeenCalledTimes(2);
   });
+
+  it('waits for an in-flight init to settle before shutting down (edge case)', async () => {
+    const { initActualApi, shutdownActualApi } = await loadModule();
+
+    let resolveInit: () => void = () => {};
+    mockApi.init.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveInit = resolve;
+        })
+    );
+
+    const initCall = initActualApi();
+    const shutdownCall = shutdownActualApi();
+
+    // Init is still in progress, so shutdown must not call api.shutdown() yet —
+    // doing so would race api.init() against api.shutdown().
+    await Promise.resolve();
+    expect(mockApi.shutdown).not.toHaveBeenCalled();
+
+    resolveInit();
+    await Promise.all([initCall, shutdownCall]);
+    expect(mockApi.shutdown).toHaveBeenCalledTimes(1);
+  });
 });
