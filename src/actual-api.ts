@@ -13,80 +13,78 @@ import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
-// API initialization state
-let initialized = false;
-let initializing = false;
-let initializationError: Error | null = null;
+// API initialization state. A single in-flight/resolved init promise is shared
+// by every caller, so concurrent calls await the same initialization instead of
+// racing into api.init(). It is cleared on failure (so a later call can retry)
+// and on shutdown.
+let initPromise: Promise<void> | null = null;
 
 /**
- * Initialize the Actual Budget API
+ * Initialize the Actual Budget API.
+ *
+ * Concurrent callers all await the same memoized initialization promise. The
+ * cached promise is cleared if initialization fails, so a later call can retry.
+ *
+ * @returns A promise that resolves once the API is initialized and a budget is loaded.
  */
-export async function initActualApi(): Promise<void> {
-  if (initialized) return;
-  if (initializing) {
-    // Wait for initialization to complete if already in progress
-    while (initializing) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-    if (initializationError) throw initializationError;
-    return;
-  }
-
-  // Reason: mark initialization as in-progress before any await so concurrent
-  // callers actually hit the wait-loop above instead of racing into init().
-  initializing = true;
-  initializationError = null;
-  try {
-    console.error('Initializing Actual Budget API...');
-    const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-    await api.init({
-      dataDir,
-      serverURL: process.env.ACTUAL_SERVER_URL,
-      password: process.env.ACTUAL_PASSWORD,
+export function initActualApi(): Promise<void> {
+  if (!initPromise) {
+    initPromise = loadBudget();
+    // Reason: drop the cached promise on failure so a later call can retry init.
+    initPromise.catch(() => {
+      initPromise = null;
     });
-
-    const budgets: BudgetFile[] = await api.getBudgets();
-    if (!budgets || budgets.length === 0) {
-      throw new Error('No budgets found. Please create a budget in Actual first.');
-    }
-
-    // Use specified budget or the first one
-    const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    console.error(`Loading budget: ${budgetId}`);
-    await api.downloadBudget(
-      budgetId,
-      process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD
-        ? {
-            password: process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD,
-          }
-        : undefined
-    );
-
-    initialized = true;
-    console.error('Actual Budget API initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize Actual Budget API:', error);
-    initializationError = error instanceof Error ? error : new Error(String(error));
-    throw initializationError;
-  } finally {
-    initializing = false;
   }
+  return initPromise;
 }
 
 /**
- * Shutdown the Actual Budget API
+ * Perform the one-time API init and budget download.
+ *
+ * Internal: callers should use {@link initActualApi}, which memoizes this.
+ */
+async function loadBudget(): Promise<void> {
+  console.error('Initializing Actual Budget API...');
+  const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  await api.init({
+    dataDir,
+    serverURL: process.env.ACTUAL_SERVER_URL,
+    password: process.env.ACTUAL_PASSWORD,
+  });
+
+  const budgets: BudgetFile[] = await api.getBudgets();
+  if (!budgets || budgets.length === 0) {
+    throw new Error('No budgets found. Please create a budget in Actual first.');
+  }
+
+  // Use specified budget or the first one
+  const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
+  console.error(`Loading budget: ${budgetId}`);
+  await api.downloadBudget(
+    budgetId,
+    process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD
+      ? {
+          password: process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD,
+        }
+      : undefined
+  );
+
+  console.error('Actual Budget API initialized successfully');
+}
+
+/**
+ * Shutdown the Actual Budget API.
  */
 export async function shutdownActualApi(): Promise<void> {
-  if (!initialized) return;
+  if (!initPromise) return;
+  initPromise = null;
   try {
     await api.shutdown();
   } catch (err) {
     console.error('Error shutting down Actual Budget API:', err);
-  } finally {
-    initialized = false;
   }
 }
 

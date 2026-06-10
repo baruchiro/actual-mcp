@@ -56,8 +56,8 @@ describe('actual-api init/shutdown stability (#96)', () => {
   it('serializes concurrent init calls so init() runs only once (edge case)', async () => {
     const { initActualApi } = await loadModule();
 
-    // Make init() pause so both callers overlap; without `initializing = true`
-    // being set before the await, both would race into api.init().
+    // Make init() pause so both callers overlap; they must share the single
+    // memoized init promise rather than each racing into api.init().
     let resolveInit: () => void = () => {};
     mockApi.init.mockImplementationOnce(
       () =>
@@ -90,5 +90,18 @@ describe('actual-api init/shutdown stability (#96)', () => {
     mockApi.shutdown.mockClear();
     await shutdownActualApi();
     expect(mockApi.shutdown).not.toHaveBeenCalled();
+  });
+
+  it('clears the memoized promise on failure so a later call retries (failure case)', async () => {
+    const { initActualApi } = await loadModule();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    mockApi.init.mockRejectedValueOnce(new Error('init failed'));
+
+    // First attempt rejects...
+    await expect(initActualApi()).rejects.toThrow('init failed');
+    // ...and a later call retries instead of reusing the failed promise.
+    await expect(initActualApi()).resolves.toBeUndefined();
+    expect(mockApi.init).toHaveBeenCalledTimes(2);
   });
 });

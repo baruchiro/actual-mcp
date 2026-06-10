@@ -1,8 +1,17 @@
+import { readFileSync } from 'node:fs';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SetLevelRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
+
+// Reason: read the version from package.json at runtime rather than importing it.
+// A static JSON import would pull package.json (outside rootDir: ./src) into the
+// compilation and break the build (TS6059). Resolving relative to import.meta.url
+// works both from build/ (build/../package.json) and from src/ under tests.
+const { version: SERVER_VERSION } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
+  version: string;
+};
 
 interface CreateServerOptions {
   enableWrite: boolean;
@@ -21,7 +30,7 @@ export function createServer(options: CreateServerOptions): Server {
   const server = new Server(
     {
       name: 'Actual Budget',
-      version: '1.0.0',
+      version: SERVER_VERSION,
     },
     {
       capabilities: {
