@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.11.0](https://github.com/baruchiro/actual-mcp/compare/v1.10.1...v1.11.0) (2026-06-12)
+
+
+### Features
+
+* port upstream stability fixes for concurrent connections and API lifecycle ([#35](https://github.com/baruchiro/actual-mcp/issues/35)) ([dd3f45d](https://github.com/baruchiro/actual-mcp/commit/dd3f45d3c745f8d17a846ef93a9b81ce532c058a))
+
+
+### Bug Fixes
+
+* address review feedback on legacy SSE error handling and server tests ([f20e80f](https://github.com/baruchiro/actual-mcp/commit/f20e80f140f70c7ec5d46dbaa8ab1e16494572e2))
+* await in-flight init before shutting down the Actual API ([e60815c](https://github.com/baruchiro/actual-mcp/commit/e60815cee113306fc78b46a981506e151e8ee656))
+* port upstream stability fixes for concurrent connections and API lifecycle ([af87a25](https://github.com/baruchiro/actual-mcp/commit/af87a2588e2e425dc57ea9653b1917b6a3b14767))
+* **rules:** convert isbetween condition array to { num1, num2 } ([#32](https://github.com/baruchiro/actual-mcp/issues/32)) ([f8185e8](https://github.com/baruchiro/actual-mcp/commit/f8185e815145ef2ecbb3f4b534f36539b6327d7c))
+
+
+### Performance Improvements
+
+* cache the downloaded budget between tool calls with a TTL ([#36](https://github.com/baruchiro/actual-mcp/issues/36)) ([85c3847](https://github.com/baruchiro/actual-mcp/commit/85c384765ed98d549bcc1526a9d7fd9a564141d0))
+
 ## [1.10.1](https://github.com/baruchiro/actual-mcp/compare/v1.10.0...v1.10.1) (2026-05-28)
 
 
