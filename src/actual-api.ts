@@ -13,72 +13,63 @@ import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
-// API initialization state
-let initialized = false;
-let initializing = false;
-let initializationError: Error | null = null;
+let initPromise: Promise<void> | null = null;
 
-/**
- * Initialize the Actual Budget API
- */
-export async function initActualApi(): Promise<void> {
-  if (initialized) return;
-  if (initializing) {
-    // Wait for initialization to complete if already in progress
-    while (initializing) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-    if (initializationError) throw initializationError;
-    return;
-  }
-
-  try {
-    console.error('Initializing Actual Budget API...');
-    const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-    await api.init({
-      dataDir,
-      serverURL: process.env.ACTUAL_SERVER_URL,
-      password: process.env.ACTUAL_PASSWORD,
+export function initActualApi(): Promise<void> {
+  if (!initPromise) {
+    initPromise = loadBudget();
+    initPromise.catch(() => {
+      initPromise = null;
     });
-
-    const budgets: BudgetFile[] = await api.getBudgets();
-    if (!budgets || budgets.length === 0) {
-      throw new Error('No budgets found. Please create a budget in Actual first.');
-    }
-
-    // Use specified budget or the first one
-    const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
-    console.error(`Loading budget: ${budgetId}`);
-    await api.downloadBudget(
-      budgetId,
-      process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD
-        ? {
-            password: process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD,
-          }
-        : undefined
-    );
-
-    initialized = true;
-    console.error('Actual Budget API initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize Actual Budget API:', error);
-    initializationError = error instanceof Error ? error : new Error(String(error));
-    throw initializationError;
-  } finally {
-    initializing = false;
   }
+  return initPromise;
 }
 
-/**
- * Shutdown the Actual Budget API
- */
+async function loadBudget(): Promise<void> {
+  console.error('Initializing Actual Budget API...');
+  const dataDir = process.env.ACTUAL_DATA_DIR || DEFAULT_DATA_DIR;
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  await api.init({
+    dataDir,
+    serverURL: process.env.ACTUAL_SERVER_URL,
+    password: process.env.ACTUAL_PASSWORD,
+  });
+
+  const budgets: BudgetFile[] = await api.getBudgets();
+  if (!budgets || budgets.length === 0) {
+    throw new Error('No budgets found. Please create a budget in Actual first.');
+  }
+
+  const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
+  console.error(`Loading budget: ${budgetId}`);
+  await api.downloadBudget(
+    budgetId,
+    process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD
+      ? {
+          password: process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD,
+        }
+      : undefined
+  );
+
+  console.error('Actual Budget API initialized successfully');
+}
+
 export async function shutdownActualApi(): Promise<void> {
-  if (!initialized) return;
-  await api.shutdown();
-  initialized = false;
+  const pending = initPromise;
+  if (!pending) return;
+  initPromise = null;
+  try {
+    await pending;
+  } catch {
+    return;
+  }
+  try {
+    await api.shutdown();
+  } catch (err) {
+    console.error('Error shutting down Actual Budget API:', err);
+  }
 }
 
 // ----------------------------
