@@ -75,6 +75,7 @@
 
 - **Update `README.md`** when new features are added, dependencies change, or setup steps are modified.
 - **Comment non-obvious code** and ensure everything is understandable to a mid-level developer.
+- **Do not write obvious code comments.** Avoid comments that merely restate what the code plainly does (e.g. `// first call: fresh init` next to an assertion, or a JSDoc that repeats the function name). Keep only notes that add information the code does not convey on its own — the _why_, not the _what_: rationale, edge cases, and surprising behavior. Prefer self-explanatory names over narration.
 - When writing complex logic, **add an inline `# Reason:` comment** explaining the why, not just the what.
 
 ### 🧠 AI Behavior Rules
