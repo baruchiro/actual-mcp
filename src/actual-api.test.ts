@@ -153,8 +153,8 @@ describe('actual-api budget caching', () => {
   it('reports a fresh init vs. a cached reuse via the return value (happy path)', async () => {
     const { initActualApi } = await loadModule();
 
-    expect(await initActualApi()).toBe(false); // first call: fresh init + download
-    expect(await initActualApi()).toBe(true); // second call: reused cached budget
+    expect(await initActualApi()).toBe(false);
+    expect(await initActualApi()).toBe(true);
     expect(mockApi.downloadBudget).toHaveBeenCalledTimes(1);
   });
 
@@ -162,7 +162,7 @@ describe('actual-api budget caching', () => {
     const { initActualApi, syncBudget } = await loadModule();
 
     await syncBudget();
-    expect(mockApi.sync).not.toHaveBeenCalled(); // nothing initialized yet
+    expect(mockApi.sync).not.toHaveBeenCalled();
 
     await initActualApi();
     await syncBudget();

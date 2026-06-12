@@ -2,7 +2,6 @@ import { CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock the Actual API lifecycle so we can assert the cache wiring without a real budget.
 vi.mock('../actual-api.js', () => ({
   initActualApi: vi.fn(),
   syncBudget: vi.fn(),
@@ -14,9 +13,6 @@ import { setupTools } from './index.js';
 
 type ToolHandler = (request: { params: { name: string; arguments?: unknown } }, extra: unknown) => Promise<unknown>;
 
-/**
- * Build the tools and return the registered call-tool handler.
- */
 function getCallToolHandler(enableWrite = false): ToolHandler {
   const handlers = new Map<unknown, unknown>();
   const fakeServer = {
@@ -36,7 +32,7 @@ describe('tools call handler — budget cache wiring', () => {
   });
 
   it('syncs when a cached budget was reused, then schedules shutdown (happy path)', async () => {
-    vi.mocked(initActualApi).mockResolvedValue(true); // reused cached budget
+    vi.mocked(initActualApi).mockResolvedValue(true);
     const handler = getCallToolHandler();
 
     await handler({ params: { name: 'does-not-exist', arguments: {} } }, {});
@@ -47,7 +43,7 @@ describe('tools call handler — budget cache wiring', () => {
   });
 
   it('skips sync after a fresh init but still schedules shutdown (edge case)', async () => {
-    vi.mocked(initActualApi).mockResolvedValue(false); // freshly initialized -> already current
+    vi.mocked(initActualApi).mockResolvedValue(false);
     const handler = getCallToolHandler();
 
     const result = await handler({ params: { name: 'does-not-exist', arguments: {} } }, {});
