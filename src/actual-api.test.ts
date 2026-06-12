@@ -6,6 +6,7 @@ const mockApi = {
   getBudgets: vi.fn(),
   downloadBudget: vi.fn(),
   shutdown: vi.fn(),
+  sync: vi.fn(),
 };
 
 vi.mock('@actual-app/api', () => ({
@@ -37,6 +38,8 @@ describe('actual-api init/shutdown stability (#96)', () => {
     mockApi.init.mockResolvedValue(undefined);
     mockApi.downloadBudget.mockResolvedValue(undefined);
     mockApi.shutdown.mockResolvedValue(undefined);
+    mockApi.sync.mockResolvedValue(undefined);
+    delete process.env.ACTUAL_MCP_CACHE_TTL_SECONDS;
   });
 
   afterEach(() => {
@@ -100,8 +103,9 @@ describe('actual-api init/shutdown stability (#96)', () => {
 
     // First attempt rejects...
     await expect(initActualApi()).rejects.toThrow('init failed');
-    // ...and a later call retries instead of reusing the failed promise.
-    await expect(initActualApi()).resolves.toBeUndefined();
+    // ...and a later call retries instead of reusing the failed promise. The
+    // retry is a fresh init (not a cached reuse), so it resolves to false.
+    await expect(initActualApi()).resolves.toBe(false);
     expect(mockApi.init).toHaveBeenCalledTimes(2);
   });
 
@@ -127,5 +131,97 @@ describe('actual-api init/shutdown stability (#96)', () => {
     resolveInit();
     await Promise.all([initCall, shutdownCall]);
     expect(mockApi.shutdown).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('actual-api budget caching', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockApi.getBudgets.mockResolvedValue([{ id: 'budget-1', cloudFileId: 'budget-1' }]);
+    mockApi.init.mockResolvedValue(undefined);
+    mockApi.downloadBudget.mockResolvedValue(undefined);
+    mockApi.shutdown.mockResolvedValue(undefined);
+    mockApi.sync.mockResolvedValue(undefined);
+    delete process.env.ACTUAL_MCP_CACHE_TTL_SECONDS;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('reports a fresh init vs. a cached reuse via the return value (happy path)', async () => {
+    const { initActualApi } = await loadModule();
+
+    expect(await initActualApi()).toBe(false);
+    expect(await initActualApi()).toBe(true);
+    expect(mockApi.downloadBudget).toHaveBeenCalledTimes(1);
+  });
+
+  it('syncs the cached budget from the server but is a no-op before init (edge case)', async () => {
+    const { initActualApi, syncBudget } = await loadModule();
+
+    await syncBudget();
+    expect(mockApi.sync).not.toHaveBeenCalled();
+
+    await initActualApi();
+    await syncBudget();
+    expect(mockApi.sync).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the API warm for the TTL and shuts down only after it elapses', async () => {
+    vi.useFakeTimers();
+    process.env.ACTUAL_MCP_CACHE_TTL_SECONDS = '60';
+    const { initActualApi, scheduleShutdown } = await loadModule();
+
+    await initActualApi();
+    scheduleShutdown();
+
+    // Still within the TTL -> not shut down yet.
+    vi.advanceTimersByTime(59_000);
+    expect(mockApi.shutdown).not.toHaveBeenCalled();
+
+    // TTL elapsed -> idle shutdown fires.
+    vi.advanceTimersByTime(2_000);
+    await vi.runAllTimersAsync();
+    expect(mockApi.shutdown).toHaveBeenCalledTimes(1);
+  });
+
+  it('shuts down immediately when caching is disabled with TTL=0 (failure/disabled case)', async () => {
+    process.env.ACTUAL_MCP_CACHE_TTL_SECONDS = '0';
+    const { initActualApi, scheduleShutdown } = await loadModule();
+
+    await initActualApi();
+    // TTL=0 returns an awaitable teardown so the caller can ensure it completed.
+    await scheduleShutdown();
+
+    expect(mockApi.shutdown).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for an in-flight shutdown to finish before re-initializing (edge case)', async () => {
+    const { initActualApi, shutdownActualApi } = await loadModule();
+
+    let resolveShutdown: () => void = () => {};
+    mockApi.shutdown.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveShutdown = resolve;
+        })
+    );
+
+    await initActualApi();
+    const shutdownCall = shutdownActualApi();
+    const reinit = initActualApi();
+
+    // Shutdown is mid-flight, so re-init must not start a second api.init()
+    // that would race the in-progress api.shutdown().
+    await Promise.resolve();
+    expect(mockApi.init).toHaveBeenCalledTimes(1);
+
+    resolveShutdown();
+    await Promise.all([shutdownCall, reinit]);
+
+    expect(mockApi.shutdown).toHaveBeenCalledTimes(1);
+    expect(mockApi.init).toHaveBeenCalledTimes(2);
   });
 });

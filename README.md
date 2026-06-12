@@ -142,6 +142,18 @@ export ACTUAL_MCP_CURRENCY_SYMBOL="USD"  # For US Dollars: $1,234.56
 # export ACTUAL_MCP_CURRENCY_SYMBOL="GBP"  # For British Pounds: £1,234.56
 ```
 
+Optional: budget cache TTL
+
+By default the server keeps the downloaded budget cached in memory for **60 seconds** between
+tool calls instead of re-downloading it every time, which makes back-to-back requests much
+faster. Cached data is kept current by syncing the latest changes from your Actual server on
+each reuse, so you still see up-to-date data. Tune or disable it with `ACTUAL_MCP_CACHE_TTL_SECONDS`:
+
+```bash
+export ACTUAL_MCP_CACHE_TTL_SECONDS="120"  # keep the budget warm for 2 minutes
+# export ACTUAL_MCP_CACHE_TTL_SECONDS="0"  # disable caching (re-download every call)
+```
+
 ## Usage with Claude Desktop
 
 To use this server with Claude Desktop, add it to your Claude configuration:
