@@ -14,6 +14,7 @@ import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
 let initPromise: Promise<void> | null = null;
+let shutdownPromise: Promise<void> | null = null;
 let shutdownTimer: ReturnType<typeof setTimeout> | null = null;
 
 const DEFAULT_CACHE_TTL_SECONDS = 60;
@@ -33,6 +34,12 @@ function getCacheTtlMs(): number {
 
 export async function initActualApi(): Promise<boolean> {
   cancelScheduledShutdown();
+  // Reason: a TTL-triggered shutdown may already be mid-flight (api.shutdown()
+  // not yet resolved). Wait for it to finish before re-initializing, otherwise
+  // loadBudget() would race api.init() against the in-progress api.shutdown().
+  if (shutdownPromise) {
+    await shutdownPromise;
+  }
   const reused = initPromise !== null;
   if (!initPromise) {
     initPromise = loadBudget();
@@ -77,19 +84,28 @@ async function loadBudget(): Promise<void> {
 
 export async function shutdownActualApi(): Promise<void> {
   cancelScheduledShutdown();
+  if (shutdownPromise) return shutdownPromise;
   const pending = initPromise;
   if (!pending) return;
   initPromise = null;
-  try {
-    await pending;
-  } catch {
-    return;
-  }
-  try {
-    await api.shutdown();
-  } catch (err) {
-    console.error('Error shutting down Actual Budget API:', err);
-  }
+  shutdownPromise = (async () => {
+    try {
+      try {
+        await pending;
+      } catch {
+        // Init itself failed; there is nothing initialized to tear down.
+        return;
+      }
+      try {
+        await api.shutdown();
+      } catch (err) {
+        console.error('Error shutting down Actual Budget API:', err);
+      }
+    } finally {
+      shutdownPromise = null;
+    }
+  })();
+  return shutdownPromise;
 }
 
 export function cancelScheduledShutdown(): void {
@@ -99,12 +115,13 @@ export function cancelScheduledShutdown(): void {
   }
 }
 
-export function scheduleShutdown(): void {
+export function scheduleShutdown(): Promise<void> | void {
   cancelScheduledShutdown();
   const ttlMs = getCacheTtlMs();
   if (ttlMs <= 0) {
-    void shutdownActualApi();
-    return;
+    // Reason: TTL=0 disables caching, so the caller can await teardown to
+    // guarantee the legacy "shut down after every call" behavior completes.
+    return shutdownActualApi();
   }
   shutdownTimer = setTimeout(() => {
     shutdownTimer = null;

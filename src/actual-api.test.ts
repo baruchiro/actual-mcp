@@ -192,11 +192,36 @@ describe('actual-api budget caching', () => {
     const { initActualApi, scheduleShutdown } = await loadModule();
 
     await initActualApi();
-    scheduleShutdown();
-    // Allow the void shutdownActualApi() promise to settle.
-    await Promise.resolve();
-    await Promise.resolve();
+    // TTL=0 returns an awaitable teardown so the caller can ensure it completed.
+    await scheduleShutdown();
 
     expect(mockApi.shutdown).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for an in-flight shutdown to finish before re-initializing (edge case)', async () => {
+    const { initActualApi, shutdownActualApi } = await loadModule();
+
+    let resolveShutdown: () => void = () => {};
+    mockApi.shutdown.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveShutdown = resolve;
+        })
+    );
+
+    await initActualApi();
+    const shutdownCall = shutdownActualApi();
+    const reinit = initActualApi();
+
+    // Shutdown is mid-flight, so re-init must not start a second api.init()
+    // that would race the in-progress api.shutdown().
+    await Promise.resolve();
+    expect(mockApi.init).toHaveBeenCalledTimes(1);
+
+    resolveShutdown();
+    await Promise.all([shutdownCall, reinit]);
+
+    expect(mockApi.shutdown).toHaveBeenCalledTimes(1);
+    expect(mockApi.init).toHaveBeenCalledTimes(2);
   });
 });

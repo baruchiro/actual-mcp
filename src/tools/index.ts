@@ -97,7 +97,7 @@ export const setupTools = (server: Server, enableWrite: boolean): void => {
       console.error(`Error executing tool ${toolName}:`, err);
       return errorFromCatch(err, { toolName });
     } finally {
-      scheduleShutdown();
+      await scheduleShutdown();
     }
   });
 };
