@@ -23,7 +23,7 @@ import { fetchAllAccounts } from './core/data/fetch-accounts.js';
 import { createServer } from './server.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 
-// Reason: dotenv@17 prints to stdout by default, which corrupts MCP stdio JSON parsing.
+// quiet: dotenv@17 otherwise prints to stdout and corrupts MCP stdio JSON.
 dotenv.config({ path: '.env', quiet: true } as Parameters<typeof dotenv.config>[0]);
 
 // Argument parsing
@@ -169,7 +169,6 @@ async function main(): Promise<void> {
       process.stderr.write('Bearer authentication disabled - endpoints are public\n');
     }
 
-    // Per-connection Server + transport so concurrent clients don't clobber each other (#137).
     const legacySseConnections = new Map<string, { server: Server; transport: SSEServerTransport }>();
     const streamableSessions = new Map<string, { server: Server; transport: StreamableHTTPServerTransport }>();
 
@@ -193,7 +192,6 @@ async function main(): Promise<void> {
       const sseTransport = new SSEServerTransport(`/messages?connectionId=${connectionId}`, res);
       legacySseConnections.set(connectionId, { server: connServer, transport: sseTransport });
 
-      // Clean up on connect failure so /messages can't route to a dead connection.
       void connServer
         .connect(sseTransport)
         .then(() => {
@@ -248,9 +246,7 @@ async function main(): Promise<void> {
               },
             });
 
-            // Only drop the session here; calling sessionServer.close() would
-            // recurse via transport.close() -> onclose and crash (#171). Server
-            // lifecycle is handled by onsessionclosed above.
+            // Don't close the server here — it recurses into onclose and crashes (#171).
             streamableTransport.onclose = () => {
               const activeSessionId = streamableTransport.sessionId;
               if (activeSessionId) {
@@ -350,7 +346,6 @@ async function main(): Promise<void> {
   }
 }
 
-// Backstops so a stray rejection/throw doesn't crash the whole MCP server.
 process.on('unhandledRejection', (reason) => {
   console.error(`Unhandled promise rejection: ${toErrorMessage(reason)}`);
 });

@@ -13,15 +13,13 @@ import { RuleEntity, TransactionEntity } from '@actual-app/api/@types/loot-core/
 
 const DEFAULT_DATA_DIR: string = path.resolve(os.homedir() || '.', '.actual');
 
-// Shared init promise: concurrent callers await the same initialization. Cleared
-// on failure (to allow retry) and on shutdown.
 let initPromise: Promise<void> | null = null;
 
 export function initActualApi(): Promise<void> {
   if (!initPromise) {
     initPromise = loadBudget();
     initPromise.catch(() => {
-      initPromise = null; // allow retry after a failed init
+      initPromise = null;
     });
   }
   return initPromise;
@@ -63,7 +61,7 @@ export async function shutdownActualApi(): Promise<void> {
   if (!pending) return;
   initPromise = null;
   try {
-    await pending; // let any in-flight init finish so init/shutdown don't race
+    await pending;
   } catch {
     return;
   }

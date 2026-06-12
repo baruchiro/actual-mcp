@@ -5,8 +5,7 @@ import { setupPrompts } from './prompts.js';
 import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 
-// Read the version at runtime; a static JSON import of package.json (outside
-// rootDir: ./src) would break the build (TS6059).
+// package.json is outside rootDir, so read it at runtime instead of importing it.
 const { version: SERVER_VERSION } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
   version: string;
 };
@@ -15,10 +14,6 @@ interface CreateServerOptions {
   enableWrite: boolean;
 }
 
-/**
- * Create a fresh MCP Server per connection/session so concurrent HTTP/SSE clients
- * never share transports or logging state.
- */
 export function createServer(options: CreateServerOptions): Server {
   const server = new Server(
     {
@@ -40,7 +35,6 @@ export function createServer(options: CreateServerOptions): Server {
   setupPrompts(server);
 
   server.setRequestHandler(SetLevelRequestSchema, (request) => {
-    // stderr, not console: avoids races across concurrent connections.
     process.stderr.write(`--- Logging level: ${request.params.level}\n`);
     return {};
   });
