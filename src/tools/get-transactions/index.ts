@@ -19,8 +19,18 @@ export const schema = {
 export async function handler(args: GetTransactionsArgs): Promise<CallToolResult> {
   try {
     const input = new GetTransactionsInputParser().parse(args);
-    const { accountId, startDate, endDate, minAmount, maxAmount, categoryName, payeeName, uncategorizedOnly, limit } =
-      input;
+    const {
+      accountId,
+      startDate,
+      endDate,
+      minAmount,
+      maxAmount,
+      categoryName,
+      payeeName,
+      uncategorizedOnly,
+      excludeTransfers,
+      limit,
+    } = input;
     const { startDate: start, endDate: end } = getDateRange(startDate, endDate);
 
     // Fetch transactions
@@ -43,6 +53,8 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
     }
     if (uncategorizedOnly) {
       filtered = filtered.filter((t) => !t.category && !t.category_name && !t.transfer_id);
+    } else if (excludeTransfers) {
+      filtered = filtered.filter((t) => !t.transfer_id);
     }
     if (limit && filtered.length > limit) {
       filtered = filtered.slice(0, limit);
@@ -59,6 +71,7 @@ export async function handler(args: GetTransactionsArgs): Promise<CallToolResult
       categoryName ? `Category: ${categoryName}` : null,
       payeeName ? `Payee: ${payeeName}` : null,
       uncategorizedOnly ? 'Uncategorized only' : null,
+      !uncategorizedOnly && excludeTransfers ? 'Excluding transfers' : null,
     ]
       .filter(Boolean)
       .join(', ');

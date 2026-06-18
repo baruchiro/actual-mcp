@@ -30,6 +30,12 @@ export const GetTransactionsArgsSchema = z.object({
     .boolean()
     .optional()
     .describe('If true, return only transactions that lack a category. Transfers are excluded.'),
+  excludeTransfers: z
+    .boolean()
+    .optional()
+    .describe(
+      'If true, exclude transfers (transactions linked to another account) from the results. Has no additional effect when uncategorizedOnly is true, since transfers are already excluded in that case.'
+    ),
   limit: z.number().optional(),
 });
 
