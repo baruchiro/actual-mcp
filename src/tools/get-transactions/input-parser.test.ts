@@ -13,4 +13,10 @@ describe(GetTransactionsInputParser.name, () => {
     expect(() => parser.parse(null)).toThrow('Arguments must be an object');
     expect(() => parser.parse('string')).toThrow('Arguments must be an object');
   });
+
+  it('should parse excludeTransfers only when it is a boolean', () => {
+    expect(parser.parse({ excludeTransfers: true }).excludeTransfers).toBe(true);
+    expect(parser.parse({ excludeTransfers: 'true' }).excludeTransfers).toBeUndefined();
+    expect(parser.parse({}).excludeTransfers).toBeUndefined();
+  });
 });

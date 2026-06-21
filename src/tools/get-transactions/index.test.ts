@@ -217,6 +217,88 @@ describe('get-transactions tool', () => {
     });
   });
 
+  describe('handler - excludeTransfers filtering', () => {
+    const withTransfers: Transaction[] = [
+      {
+        id: 'tx-spend',
+        account: 'account-1',
+        date: '2025-12-01',
+        amount: 5000,
+        payee_name: 'Coffee Shop',
+        category: 'cat-1',
+        category_name: 'Food',
+      },
+      {
+        id: 'tx-uncat',
+        account: 'account-1',
+        date: '2025-12-02',
+        amount: 10000,
+        payee_name: 'Unknown Store',
+      },
+      {
+        id: 'tx-transfer-out',
+        account: 'account-1',
+        date: '2025-12-03',
+        amount: -20000,
+        payee_name: 'Credit Card',
+        transfer_id: 'tx-transfer-in',
+      },
+    ];
+
+    it('should exclude transfers but keep categorized transactions when excludeTransfers is true', async () => {
+      mockFetch.mockResolvedValue(withTransfers);
+
+      const args: GetTransactionsArgs = {
+        accountId: 'account-1',
+        excludeTransfers: true,
+      };
+
+      const result = await handler(args);
+
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain('tx-spend');
+      expect(result.content[0].text).toContain('tx-uncat');
+      expect(result.content[0].text).not.toContain('tx-transfer-out');
+      expect(result.content[0].text).toContain('Excluding transfers');
+      expect(result.content[0].text).toContain('Matching Transactions: 2/3');
+    });
+
+    it('should include transfers when excludeTransfers is false', async () => {
+      mockFetch.mockResolvedValue(withTransfers);
+
+      const args: GetTransactionsArgs = {
+        accountId: 'account-1',
+        excludeTransfers: false,
+      };
+
+      const result = await handler(args);
+
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain('tx-transfer-out');
+      expect(result.content[0].text).not.toContain('Excluding transfers');
+    });
+
+    it('should not duplicate the transfer filter when both uncategorizedOnly and excludeTransfers are true', async () => {
+      mockFetch.mockResolvedValue(withTransfers);
+
+      const args: GetTransactionsArgs = {
+        accountId: 'account-1',
+        uncategorizedOnly: true,
+        excludeTransfers: true,
+      };
+
+      const result = await handler(args);
+
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0].text).toContain('tx-uncat');
+      expect(result.content[0].text).not.toContain('tx-spend');
+      expect(result.content[0].text).not.toContain('tx-transfer-out');
+      expect(result.content[0].text).toContain('Uncategorized only');
+      expect(result.content[0].text).not.toContain('Excluding transfers');
+      expect(result.content[0].text).toContain('Matching Transactions: 1/3');
+    });
+  });
+
   describe('handler - edge cases', () => {
     it('should handle empty transaction list', async () => {
       mockFetch.mockResolvedValue([]);
