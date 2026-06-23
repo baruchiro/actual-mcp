@@ -1,0 +1,110 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly run to catch drift against @actual-app/api's bundled budget engine.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ACTUAL_DATA_DIR: ${{ github.workspace }}/.actual-e2e
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build MCP server
+        run: npm run build
+
+      # Actual's budget engine is in-process, so there is no server to run:
+      # provision a local budget file that both passes below will load.
+      - name: Provision a local budget
+        run: npx tsx e2e/setup-budget.ts
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image for E2E
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: actual-mcp:e2e
+          cache-from: type=gha,scope=actual-mcp-docker
+          cache-to: type=gha,scope=actual-mcp-docker,mode=max
+
+      # ---- CLI build ----
+
+      - name: Start MCP server (CLI build)
+        run: |
+          node build/index.js --sse --enable-write --port 3001 &
+          echo "MCP_CLI_PID=$!" >> "$GITHUB_ENV"
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/mcp || true)
+            if [ "$code" = "400" ]; then echo "MCP server (CLI) ready"; exit 0; fi
+            sleep 1
+          done
+          echo "MCP server (CLI) failed to start"
+          exit 1
+
+      - name: Run E2E tests (CLI build)
+        run: npm run test:e2e
+        env:
+          MCP_URL: http://localhost:3001/mcp
+
+      - name: Stop CLI MCP
+        if: always()
+        run: kill "$MCP_CLI_PID" 2>/dev/null || true
+
+      # ---- Docker image ----
+
+      - name: Start MCP server (Docker image)
+        if: ${{ !cancelled() }}
+        run: |
+          docker run -d --name actual-mcp-e2e \
+            --network host \
+            -e ACTUAL_DATA_DIR=/data \
+            -v "$ACTUAL_DATA_DIR":/data \
+            actual-mcp:e2e --sse --enable-write --port 3000
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/mcp || true)
+            if [ "$code" = "400" ]; then echo "MCP server (Docker) ready"; exit 0; fi
+            sleep 1
+          done
+          echo "MCP server (Docker) failed to start"
+          docker logs actual-mcp-e2e
+          exit 1
+
+      - name: Run E2E tests (Docker image)
+        if: ${{ !cancelled() }}
+        run: npm run test:e2e
+        env:
+          MCP_URL: http://localhost:3000/mcp
+
+      - name: Print Docker logs on failure
+        if: failure()
+        run: docker logs actual-mcp-e2e --tail=80 || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          kill "$MCP_CLI_PID" 2>/dev/null || true
+          docker rm -f actual-mcp-e2e 2>/dev/null || true

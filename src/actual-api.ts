@@ -70,14 +70,22 @@ async function loadBudget(): Promise<void> {
 
   const budgetId: string = process.env.ACTUAL_BUDGET_SYNC_ID || budgets[0].cloudFileId || budgets[0].id || '';
   console.error(`Loading budget: ${budgetId}`);
-  await api.downloadBudget(
-    budgetId,
-    process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD
-      ? {
-          password: process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD,
-        }
-      : undefined
-  );
+  if (process.env.ACTUAL_SERVER_URL) {
+    await api.downloadBudget(
+      budgetId,
+      process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD
+        ? {
+            password: process.env.ACTUAL_BUDGET_ENCRYPTION_PASSWORD,
+          }
+        : undefined
+    );
+  } else {
+    // Reason: downloadBudget always asks a sync server for the remote file list
+    // and throws "Could not get remote files" when none is configured. In
+    // local-only mode (ACTUAL_DATA_DIR without ACTUAL_SERVER_URL) the budget is
+    // already on disk, so load it directly instead of trying to download it.
+    await api.loadBudget(budgetId);
+  }
 
   console.error('Actual Budget API initialized successfully');
 }
@@ -132,6 +140,9 @@ export function scheduleShutdown(): Promise<void> | void {
 
 export async function syncBudget(): Promise<void> {
   if (!initPromise) return;
+  // Reason: api.sync() reconciles with a sync server; in local-only mode
+  // (no ACTUAL_SERVER_URL) there is no server and the call errors out.
+  if (!process.env.ACTUAL_SERVER_URL) return;
   try {
     await api.sync();
   } catch (err) {
