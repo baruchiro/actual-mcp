@@ -154,6 +154,22 @@ export ACTUAL_MCP_CACHE_TTL_SECONDS="120"  # keep the budget warm for 2 minutes
 # export ACTUAL_MCP_CACHE_TTL_SECONDS="0"  # disable caching (re-download every call)
 ```
 
+Optional: pin the `@actual-app/api` version (Docker)
+
+The Docker image ships with a specific `@actual-app/api` version, but different self-hosted Actual deployments run different sync-server versions, and the bundled API does not always match yours. Set `ACTUAL_MCP_API_VERSION` to have the container install a matching version at startup, without rebuilding the image:
+
+```bash
+# Install an exact version that matches your sync-server (recommended)
+export ACTUAL_MCP_API_VERSION="26.5.2"
+# export ACTUAL_MCP_API_VERSION="latest"  # always install the newest published version
+```
+
+- **Unset (default):** use the version baked into the image — no extra startup cost. This is the only mode that works offline / without npm access.
+- **An exact version:** runs `npm install @actual-app/api@<version>` before launching. Skipped if that version is already installed.
+- **`latest`:** installs the newest published version on every start.
+
+> 💡 This adds ~npm-install time to container startup and only applies to the Docker image (the entrypoint runs the install). If the install fails, the container exits non-zero so your Docker restart policy can react.
+
 ## Usage with Claude Desktop
 
 To use this server with Claude Desktop, add it to your Claude configuration:

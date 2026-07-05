@@ -1,20 +1,73 @@
-name: E2E Tests
+name: E2E
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
-  pull_request:
   schedule:
     # Weekly run to catch drift against @actual-app/api's bundled budget engine.
     - cron: '0 8 * * 1'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  e2e:
+  version-pinning:
+    name: Container API version pinning
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: actual-mcp:e2e
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Resolve versions under test
+        id: versions
+        run: |
+          set -euo pipefail
+          baked=$(node -p "require('./package.json').dependencies['@actual-app/api']")
+          latest=$(npm view @actual-app/api version)
+          specific=$(npm view @actual-app/api versions --json \
+            | node -e 'const vs=JSON.parse(require("fs").readFileSync(0,"utf8"));const latest=process.argv[1];process.stdout.write([...vs].reverse().find((v)=>v!==latest)??latest)' "$latest")
+          {
+            echo "baked=$baked"
+            echo "latest=$latest"
+            echo "specific=$specific"
+          } >>"$GITHUB_OUTPUT"
+          echo "baked-in=$baked  latest=$latest  explicit-pin=$specific"
+
+      - name: Run version-pinning e2e
+        env:
+          IMAGE: actual-mcp:e2e
+          BAKED: ${{ steps.versions.outputs.baked }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+          SPECIFIC: ${{ steps.versions.outputs.specific }}
+        run: bash .github/e2e/version-pinning.sh
+
+  mcp-scenario:
+    name: MCP end-to-end scenario
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    permissions:
-      contents: read
     env:
       ACTUAL_DATA_DIR: ${{ github.workspace }}/.actual-e2e
 
