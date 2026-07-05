@@ -7,6 +7,10 @@ async function main(): Promise<void> {
   if (!dataDir) {
     throw new Error('ACTUAL_DATA_DIR must be set so this script and the MCP server share one budget');
   }
+  // runImport creates a new budget file every run; wipe any prior state so a
+  // reused ACTUAL_DATA_DIR can't leave stale budgets that make budgets[0]
+  // (and therefore the budget the server loads) non-deterministic.
+  fs.rmSync(dataDir, { recursive: true, force: true });
   fs.mkdirSync(dataDir, { recursive: true });
 
   // No serverURL: @actual-app/api embeds the budget engine and runs fully local

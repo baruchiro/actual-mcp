@@ -13,11 +13,15 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     env:
       ACTUAL_DATA_DIR: ${{ github.workspace }}/.actual-e2e
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -58,7 +62,7 @@ jobs:
           node build/index.js --sse --enable-write --port 3001 &
           echo "MCP_CLI_PID=$!" >> "$GITHUB_ENV"
           for i in $(seq 1 20); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/mcp || true)
+            code=$(curl -s --connect-timeout 3 --max-time 5 -o /dev/null -w "%{http_code}" http://localhost:3001/mcp || true)
             if [ "$code" = "400" ]; then echo "MCP server (CLI) ready"; exit 0; fi
             sleep 1
           done
@@ -85,7 +89,7 @@ jobs:
             -v "$ACTUAL_DATA_DIR":/data \
             actual-mcp:e2e --sse --enable-write --port 3000
           for i in $(seq 1 20); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/mcp || true)
+            code=$(curl -s --connect-timeout 3 --max-time 5 -o /dev/null -w "%{http_code}" http://localhost:3000/mcp || true)
             if [ "$code" = "400" ]; then echo "MCP server (Docker) ready"; exit 0; fi
             sleep 1
           done

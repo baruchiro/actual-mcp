@@ -272,6 +272,18 @@ describe('actual-api budget load mode (local vs server)', () => {
     expect(mockApi.downloadBudget).not.toHaveBeenCalled();
   });
 
+  it('prefers the local id over cloudFileId in local mode (edge case)', async () => {
+    // A previously-synced budget has both; loadBudget needs the local id, not
+    // the cloud sync id, so cloudFileId must not win here.
+    mockApi.getBudgets.mockResolvedValue([{ id: 'local-only', cloudFileId: 'cloud-1' }]);
+    const { initActualApi } = await loadModule();
+
+    await initActualApi();
+
+    expect(mockApi.loadBudget).toHaveBeenCalledWith('local-only');
+    expect(mockApi.downloadBudget).not.toHaveBeenCalled();
+  });
+
   it('honors ACTUAL_BUDGET_SYNC_ID over the discovered id in local mode (edge case)', async () => {
     mockApi.getBudgets.mockResolvedValue([{ id: 'local-only' }]);
     process.env.ACTUAL_BUDGET_SYNC_ID = 'pinned-budget';
