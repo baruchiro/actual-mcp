@@ -5,6 +5,7 @@ const mockApi = {
   init: vi.fn(),
   getBudgets: vi.fn(),
   downloadBudget: vi.fn(),
+  loadBudget: vi.fn(),
   shutdown: vi.fn(),
   sync: vi.fn(),
 };
@@ -37,9 +38,12 @@ describe('actual-api init/shutdown stability (#96)', () => {
     mockApi.getBudgets.mockResolvedValue([{ id: 'budget-1', cloudFileId: 'budget-1' }]);
     mockApi.init.mockResolvedValue(undefined);
     mockApi.downloadBudget.mockResolvedValue(undefined);
+    mockApi.loadBudget.mockResolvedValue(undefined);
     mockApi.shutdown.mockResolvedValue(undefined);
     mockApi.sync.mockResolvedValue(undefined);
     delete process.env.ACTUAL_MCP_CACHE_TTL_SECONDS;
+    // These suites exercise the server path; the load-mode branch is covered separately.
+    process.env.ACTUAL_SERVER_URL = 'https://actual.example.test';
   });
 
   afterEach(() => {
@@ -140,9 +144,12 @@ describe('actual-api budget caching', () => {
     mockApi.getBudgets.mockResolvedValue([{ id: 'budget-1', cloudFileId: 'budget-1' }]);
     mockApi.init.mockResolvedValue(undefined);
     mockApi.downloadBudget.mockResolvedValue(undefined);
+    mockApi.loadBudget.mockResolvedValue(undefined);
     mockApi.shutdown.mockResolvedValue(undefined);
     mockApi.sync.mockResolvedValue(undefined);
     delete process.env.ACTUAL_MCP_CACHE_TTL_SECONDS;
+    // These suites exercise the server path; the load-mode branch is covered separately.
+    process.env.ACTUAL_SERVER_URL = 'https://actual.example.test';
   });
 
   afterEach(() => {
@@ -223,5 +230,67 @@ describe('actual-api budget caching', () => {
 
     expect(mockApi.shutdown).toHaveBeenCalledTimes(1);
     expect(mockApi.init).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('actual-api budget load mode (local vs server)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockApi.getBudgets.mockResolvedValue([{ id: 'budget-1', cloudFileId: 'cloud-1' }]);
+    mockApi.init.mockResolvedValue(undefined);
+    mockApi.downloadBudget.mockResolvedValue(undefined);
+    mockApi.loadBudget.mockResolvedValue(undefined);
+    mockApi.shutdown.mockResolvedValue(undefined);
+    delete process.env.ACTUAL_MCP_CACHE_TTL_SECONDS;
+    delete process.env.ACTUAL_SERVER_URL;
+    delete process.env.ACTUAL_BUDGET_SYNC_ID;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.ACTUAL_SERVER_URL;
+    delete process.env.ACTUAL_BUDGET_SYNC_ID;
+  });
+
+  it('downloads from the server when ACTUAL_SERVER_URL is set (happy path)', async () => {
+    process.env.ACTUAL_SERVER_URL = 'https://actual.example.test';
+    const { initActualApi } = await loadModule();
+
+    await initActualApi();
+
+    expect(mockApi.downloadBudget).toHaveBeenCalledWith('cloud-1', undefined);
+    expect(mockApi.loadBudget).not.toHaveBeenCalled();
+  });
+
+  it('loads the on-disk budget directly in local-only mode (no server)', async () => {
+    mockApi.getBudgets.mockResolvedValue([{ id: 'local-only' }]);
+    const { initActualApi } = await loadModule();
+
+    await initActualApi();
+
+    expect(mockApi.loadBudget).toHaveBeenCalledWith('local-only');
+    expect(mockApi.downloadBudget).not.toHaveBeenCalled();
+  });
+
+  it('prefers the local id over cloudFileId in local mode (edge case)', async () => {
+    // A previously-synced budget has both; loadBudget needs the local id, not
+    // the cloud sync id, so cloudFileId must not win here.
+    mockApi.getBudgets.mockResolvedValue([{ id: 'local-only', cloudFileId: 'cloud-1' }]);
+    const { initActualApi } = await loadModule();
+
+    await initActualApi();
+
+    expect(mockApi.loadBudget).toHaveBeenCalledWith('local-only');
+    expect(mockApi.downloadBudget).not.toHaveBeenCalled();
+  });
+
+  it('honors ACTUAL_BUDGET_SYNC_ID over the discovered id in local mode (edge case)', async () => {
+    mockApi.getBudgets.mockResolvedValue([{ id: 'local-only' }]);
+    process.env.ACTUAL_BUDGET_SYNC_ID = 'pinned-budget';
+    const { initActualApi } = await loadModule();
+
+    await initActualApi();
+
+    expect(mockApi.loadBudget).toHaveBeenCalledWith('pinned-budget');
   });
 });

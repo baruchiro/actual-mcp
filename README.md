@@ -346,6 +346,24 @@ To verify the server can connect to your Actual Budget data:
 node build/index.js --test-resources
 ```
 
+### End-to-end tests
+
+The e2e suite drives the running MCP server through a real MCP client. Because
+Actual's budget engine runs in-process via `@actual-app/api`, **no Actual sync
+server is needed** — a local budget file is provisioned on disk and loaded
+directly. To run it locally:
+
+```bash
+npm run build
+export ACTUAL_DATA_DIR="$(mktemp -d)"        # shared by the script and server
+npx tsx e2e/setup-budget.ts                  # create a local budget to load
+node build/index.js --sse --enable-write --port 3001 &
+MCP_URL=http://localhost:3001/mcp npm run test:e2e
+```
+
+CI (`.github/workflows/e2e.yml`) runs the same scenario against both the built
+server and the Docker image.
+
 ### Debugging
 
 Since MCP servers communicate over stdio, debugging can be challenging. You can use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
