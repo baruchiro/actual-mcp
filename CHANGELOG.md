@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.12.0](https://github.com/baruchiro/actual-mcp/compare/v1.11.0...v1.12.0) (2026-07-08)
+
+
+### Features
+
+* add end-to-end test suite with local budget support ([#42](https://github.com/baruchiro/actual-mcp/issues/42)) ([a7a117f](https://github.com/baruchiro/actual-mcp/commit/a7a117ff8eb4bd2cd47841361c8106c2429dd7d6))
+* allow pinning @actual-app/api version at container start ([#37](https://github.com/baruchiro/actual-mcp/issues/37)) ([95b9a10](https://github.com/baruchiro/actual-mcp/commit/95b9a1032eb37894e1405b41484b97cbfb4e673f))
+* **get-transactions:** add excludeTransfers option ([#40](https://github.com/baruchiro/actual-mcp/issues/40)) ([711da8d](https://github.com/baruchiro/actual-mcp/commit/711da8df86872f4c3584f419f2bbf5403c1362f3))
+
 ## [1.11.0](https://github.com/baruchiro/actual-mcp/compare/v1.10.1...v1.11.0) (2026-06-12)
 
 
